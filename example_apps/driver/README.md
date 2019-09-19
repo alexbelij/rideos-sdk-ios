@@ -16,6 +16,20 @@ To run any application that uses the RideOsDriver SDK, you will need an Auth0 cl
 
 Once you have the client and user database IDs, open `Auth0.plist` and change the `ClientId` property to match your client ID and the `UserDatabaseId` property to match your user database ID.
 
+## Create a fleet
+
+Before you start hailing rides, you'll need to create a fleet for your riders and drivers to operate on. The easiest way to do this is to grab your rideOS API key from [https://app.rideos.ai/profile](https://app.rideos.ai/profile). Once you have the API key, fill it into the following request, along with your intended fleet's ID.
+
+```bash
+curl -H "Content-Type: application/json" \
+    -H "X-Api-Key: YOUR_API_KEY" \
+    --data '{"id": "YOUR_FLEET_ID"}' \
+    https://api.rideos.ai/ride-hail-operations/v1/CreateFleet
+```
+Note that you only need to run this command once, even if you're building both a rider and a driver app, and that you should use the same fleet ID for both apps.
+
+Then, open `Info.plist` and change the value of the `DefaultFleetID` to match your chosen fleet ID.
+
 ## Google Maps
 
 By default, the example driver app uses our Google Maps-based implementation of our mapping protocols, so you'll need a Google API key. You can get one by following [these instructions](https://developers.google.com/maps/documentation/ios-sdk/get-api-key). Once you have a Google API key, open `Info.plist` and replace the value of `GoogleAPIKey` with your Google API key.
