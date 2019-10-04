@@ -8,7 +8,13 @@ Note that the `RideOsDriver` SDK, which provides the bulk of the functionality f
 
 ## Install CocoaPods
 
-If you don't already have CocoaPods installed, follow the instructions on their [homepage](https://cocoapods.org/) to install it. Once it is installed, run `pod install` from within the `example_apps/driver/ExampleDriverApp` directory and then open the generated `ExampleDriverApp.xcworkspace`.
+We use a `Gemfile` to specify the latest version of CocoaPods that was tested with the project. To install CocoaPods using the `Gemfile`, run the following from within the `example_apps/driver/ExampleDriverApp` directory:
+```
+gem install bundler
+bundle install
+```
+
+Once it is installed, run `pod install` and then open the generated `ExampleDriverApp.xcworkspace`.
 
 ## User authentication
 
