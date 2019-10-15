@@ -8,36 +8,37 @@ def ride_os_common
   pod 'RideOsCommon', :path => '../'
 end
 
-def rx_test
+def common_test_pods
   pod 'RxTest', '4.4.1'
+  pod 'Cuckoo', '1.1.1'
 end
 
 target 'RideOsTestHelpers' do
   ride_os_common
-  rx_test
+  common_test_pods
 end
 
 target 'RideOsCommonTests' do
   ride_os_common
-  rx_test
+  common_test_pods
 end
 
 target 'RideOsRiderTests' do
   pod 'RideOsRider', :path => '../'
-  rx_test
+  common_test_pods
 end
 
 target 'RideOsDriverTests' do
   pod 'RideOsDriver', :path => '../'
-  rx_test
+  common_test_pods
 end
 
 target 'RideOsHereMapsTests' do
   pod 'RideOsHereMaps', :path => '../'
-  rx_test
+  common_test_pods
 end
 
 target 'RideOsGoogleMapsTests' do
   pod 'RideOsGoogleMaps', :path => '../'
-  rx_test
+  common_test_pods
 end

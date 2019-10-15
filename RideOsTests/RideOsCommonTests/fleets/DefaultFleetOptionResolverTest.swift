@@ -8,6 +8,10 @@ import XCTest
 
 class DefaultFleetOptionResolverTest: ReactiveTestCase {
     private static let deviceLocation = CLLocation(latitude: 0, longitude: 0)
+    private static let defaultFleetInfo = FleetInfo(fleetId: "default fleet ID",
+                                                    displayName: "",
+                                                    center: nil,
+                                                    isPhantom: false)
 
     private var fleetOptionResolverUnderTest: DefaultFleetOptionResolver!
     private var resolvedFleetRecorder: TestableObserver<FleetInfoResolutionResponse>!
@@ -17,6 +21,7 @@ class DefaultFleetOptionResolverTest: ReactiveTestCase {
 
         fleetOptionResolverUnderTest = DefaultFleetOptionResolver(
             fleetInteractor: FixedFleetInteractor(fleets: fleets),
+            defaultFleetId: DefaultFleetOptionResolverTest.defaultFleetInfo.fleetId,
             deviceLocator: FixedDeviceLocator(deviceLocation: DefaultFleetOptionResolverTest.deviceLocation),
             schedulerProvider: TestSchedulerProvider(scheduler: scheduler),
             logger: ConsoleLogger()
@@ -38,6 +43,7 @@ class DefaultFleetOptionResolverTest: ReactiveTestCase {
                       displayName: "",
                       center: CLLocationCoordinate2D(latitude: 1, longitude: 1),
                       isPhantom: false),
+            DefaultFleetOptionResolverTest.defaultFleetInfo,
         ]
         setUp(fleets: fleets, fleetOptionToResolve: .automatic)
 
@@ -58,6 +64,7 @@ class DefaultFleetOptionResolverTest: ReactiveTestCase {
                       displayName: "",
                       center: CLLocationCoordinate2D(latitude: 1, longitude: 1),
                       isPhantom: false),
+            DefaultFleetOptionResolverTest.defaultFleetInfo,
         ]
         setUp(fleets: fleets, fleetOptionToResolve: .manual(fleetInfo: fleets[1]))
 
@@ -78,6 +85,7 @@ class DefaultFleetOptionResolverTest: ReactiveTestCase {
                       displayName: "",
                       center: CLLocationCoordinate2D(latitude: 1, longitude: 1),
                       isPhantom: false),
+            DefaultFleetOptionResolverTest.defaultFleetInfo,
         ]
         setUp(fleets: fleets,
               fleetOptionToResolve: .manual(fleetInfo: FleetInfo(fleetId: "unknown fleet",
@@ -102,6 +110,7 @@ class DefaultFleetOptionResolverTest: ReactiveTestCase {
                       displayName: "",
                       center: CLLocationCoordinate2D(latitude: 1, longitude: 1),
                       isPhantom: false),
+            DefaultFleetOptionResolverTest.defaultFleetInfo,
         ]
         setUp(fleets: fleets, fleetOptionToResolve: .automatic)
 
@@ -122,6 +131,7 @@ class DefaultFleetOptionResolverTest: ReactiveTestCase {
                       displayName: "",
                       center: CLLocationCoordinate2D(latitude: 1, longitude: 1),
                       isPhantom: true),
+            DefaultFleetOptionResolverTest.defaultFleetInfo,
         ]
         setUp(fleets: fleets, fleetOptionToResolve: .automatic)
 
@@ -142,6 +152,7 @@ class DefaultFleetOptionResolverTest: ReactiveTestCase {
                       displayName: "",
                       center: CLLocationCoordinate2D(latitude: 1, longitude: 1),
                       isPhantom: false),
+            DefaultFleetOptionResolverTest.defaultFleetInfo,
         ]
         setUp(fleets: fleets, fleetOptionToResolve: .automatic)
 
@@ -162,13 +173,15 @@ class DefaultFleetOptionResolverTest: ReactiveTestCase {
                       displayName: "",
                       center: nil,
                       isPhantom: false),
+            DefaultFleetOptionResolverTest.defaultFleetInfo,
         ]
         setUp(fleets: fleets, fleetOptionToResolve: .automatic)
 
         scheduler.start()
 
         AssertRecordedElementsIgnoringCompletion(resolvedFleetRecorder.events, [
-            FleetInfoResolutionResponse(fleetInfo: FleetInfo.defaultFleetInfo, wasRequestedFleetAvailable: true),
+            FleetInfoResolutionResponse(fleetInfo: DefaultFleetOptionResolverTest.defaultFleetInfo,
+                                        wasRequestedFleetAvailable: true),
         ])
     }
 }

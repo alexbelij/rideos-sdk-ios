@@ -12,6 +12,7 @@
 		3E9764443623DDA43DBBAAD0 /* Pods_RideOsTestHelpers.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 933C0298345E7412A16D47F2 /* Pods_RideOsTestHelpers.framework */; };
 		560712D4230384B50003CFF3 /* DefaultOfflineViewModelTest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 560712D3230384B50003CFF3 /* DefaultOfflineViewModelTest.swift */; };
 		56850A39230623820084FE92 /* DefaultIdleViewModelTest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56850A38230623820084FE92 /* DefaultIdleViewModelTest.swift */; };
+		56850A49230E8EB80084FE92 /* DefaultWaitingForPickupViewModelTest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56850A48230E8EB80084FE92 /* DefaultWaitingForPickupViewModelTest.swift */; };
 		5685792422F8EF8800D808A2 /* ReplayingTripStateInteractor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5685792322F8EF8800D808A2 /* ReplayingTripStateInteractor.swift */; };
 		56AF72FA22F396B500ACE78B /* RecordingVehicleStateSynchronizer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56AF72F922F396B400ACE78B /* RecordingVehicleStateSynchronizer.swift */; };
 		699EF21BFF7F53FAAE220659 /* Pods_RideOsCommonTests.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AE66AF8FB08CEA43D6FDDA1E /* Pods_RideOsCommonTests.framework */; };
@@ -70,7 +71,6 @@
 		831A90C522EBB1D200204D8A /* DefaultOnTripViewModelTest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 831A90A822EBB1D200204D8A /* DefaultOnTripViewModelTest.swift */; };
 		831A90C622EBB1D200204D8A /* DefaultStartScreenViewModelTest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 831A90AA22EBB1D200204D8A /* DefaultStartScreenViewModelTest.swift */; };
 		831A90C722EBB1D200204D8A /* RecordingConfirmLocationListener.swift in Sources */ = {isa = PBXBuildFile; fileRef = 831A90AC22EBB1D200204D8A /* RecordingConfirmLocationListener.swift */; };
-		831A90C822EBB1D200204D8A /* FixedHistoricalSearchInteractor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 831A90AE22EBB1D200204D8A /* FixedHistoricalSearchInteractor.swift */; };
 		831A90C922EBB1D200204D8A /* UserStorageHistoricalSearchInteractorTest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 831A90AF22EBB1D200204D8A /* UserStorageHistoricalSearchInteractorTest.swift */; };
 		831A90CA22EBB1D200204D8A /* FixedTripInteractor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 831A90B022EBB1D200204D8A /* FixedTripInteractor.swift */; };
 		831A90CB22EBB1D200204D8A /* FixedAvailableVehicleInteractor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 831A90B122EBB1D200204D8A /* FixedAvailableVehicleInteractor.swift */; };
@@ -78,6 +78,9 @@
 		831A90CD22EBB1D200204D8A /* FixedVehicleInteractor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 831A90B322EBB1D200204D8A /* FixedVehicleInteractor.swift */; };
 		831A90CE22EBB1D200204D8A /* FixedStopInteractor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 831A90B422EBB1D200204D8A /* FixedStopInteractor.swift */; };
 		831A90D022EBB2C400204D8A /* RideOsTestHelpers.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 831A901322E9158100204D8A /* RideOsTestHelpers.framework */; };
+		8358387C2327015800769164 /* RideOsRiderTestsGeneratedMocks.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8358387B2327015800769164 /* RideOsRiderTestsGeneratedMocks.swift */; };
+		83675B0623394A0E00B3481B /* MapboxPolylineSimplifierTest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83675B0523394A0E00B3481B /* MapboxPolylineSimplifierTest.swift */; };
+		83675B09233966FB00B3481B /* RideOsDriverTestsGeneratedMocks.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83675B08233966FA00B3481B /* RideOsDriverTestsGeneratedMocks.swift */; };
 		83D53B8F22F8ECA7000F915E /* DummyTest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83D53B8E22F8ECA7000F915E /* DummyTest.swift */; };
 		DC204A90306DB21B02197967 /* Pods_RideOsHereMapsTests.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 6CA9B6F4F01B756809E3CAD6 /* Pods_RideOsHereMapsTests.framework */; };
 		F3CEF73136F78FF8337049A7 /* Pods_RideOsRiderTests.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5286238EA03B38B8E114750E /* Pods_RideOsRiderTests.framework */; };
@@ -86,14 +89,14 @@
 /* Begin PBXFileReference section */
 		03289CC424A0BACE6E276C50 /* Pods_RideOsGoogleMapsTests.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_RideOsGoogleMapsTests.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		08FE71076F28807866636509 /* Pods-RideOsRiderTests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-RideOsRiderTests.release.xcconfig"; path = "Target Support Files/Pods-RideOsRiderTests/Pods-RideOsRiderTests.release.xcconfig"; sourceTree = "<group>"; };
-		2CDDD4F15E5697D0122785CB /* Pods-RideOsTestHelpers.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-RideOsTestHelpers.release.xcconfig"; path = "Target Support Files/Pods-RideOsTestHelpers/Pods-RideOsTestHelpers.release.xcconfig"; sourceTree = "<group>"; };
+		177810991EA9E5D7AD080F17 /* Pods-RideOsTestHelpers.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-RideOsTestHelpers.debug.xcconfig"; path = "Target Support Files/Pods-RideOsTestHelpers/Pods-RideOsTestHelpers.debug.xcconfig"; sourceTree = "<group>"; };
 		3FAE7E241B69DCE3BF486FD8 /* Pods-RideOsCommonTests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-RideOsCommonTests.release.xcconfig"; path = "Target Support Files/Pods-RideOsCommonTests/Pods-RideOsCommonTests.release.xcconfig"; sourceTree = "<group>"; };
 		5286238EA03B38B8E114750E /* Pods_RideOsRiderTests.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_RideOsRiderTests.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		560712D3230384B50003CFF3 /* DefaultOfflineViewModelTest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DefaultOfflineViewModelTest.swift; sourceTree = "<group>"; };
 		56850A38230623820084FE92 /* DefaultIdleViewModelTest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DefaultIdleViewModelTest.swift; sourceTree = "<group>"; };
+		56850A48230E8EB80084FE92 /* DefaultWaitingForPickupViewModelTest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DefaultWaitingForPickupViewModelTest.swift; sourceTree = "<group>"; };
 		5685792322F8EF8800D808A2 /* ReplayingTripStateInteractor.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ReplayingTripStateInteractor.swift; sourceTree = "<group>"; };
 		56AF72F922F396B400ACE78B /* RecordingVehicleStateSynchronizer.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = RecordingVehicleStateSynchronizer.swift; sourceTree = "<group>"; };
-		60845883D35BB272AC323669 /* Pods-RideOsTestHelpers.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-RideOsTestHelpers.debug.xcconfig"; path = "Target Support Files/Pods-RideOsTestHelpers/Pods-RideOsTestHelpers.debug.xcconfig"; sourceTree = "<group>"; };
 		6CA9B6F4F01B756809E3CAD6 /* Pods_RideOsHereMapsTests.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_RideOsHereMapsTests.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		7B8BEC4A7ED3C6F8DE5A99C1 /* Pods-RideOsGoogleMapsTests.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-RideOsGoogleMapsTests.debug.xcconfig"; path = "Target Support Files/Pods-RideOsGoogleMapsTests/Pods-RideOsGoogleMapsTests.debug.xcconfig"; sourceTree = "<group>"; };
 		7F1983E2CAF92CBE24BC7688 /* Pods_RideOsDriverTests.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_RideOsDriverTests.framework; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -160,13 +163,19 @@
 		831A90A822EBB1D200204D8A /* DefaultOnTripViewModelTest.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DefaultOnTripViewModelTest.swift; sourceTree = "<group>"; };
 		831A90AA22EBB1D200204D8A /* DefaultStartScreenViewModelTest.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DefaultStartScreenViewModelTest.swift; sourceTree = "<group>"; };
 		831A90AC22EBB1D200204D8A /* RecordingConfirmLocationListener.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = RecordingConfirmLocationListener.swift; sourceTree = "<group>"; };
-		831A90AE22EBB1D200204D8A /* FixedHistoricalSearchInteractor.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = FixedHistoricalSearchInteractor.swift; sourceTree = "<group>"; };
 		831A90AF22EBB1D200204D8A /* UserStorageHistoricalSearchInteractorTest.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = UserStorageHistoricalSearchInteractorTest.swift; sourceTree = "<group>"; };
 		831A90B022EBB1D200204D8A /* FixedTripInteractor.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = FixedTripInteractor.swift; sourceTree = "<group>"; };
 		831A90B122EBB1D200204D8A /* FixedAvailableVehicleInteractor.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = FixedAvailableVehicleInteractor.swift; sourceTree = "<group>"; };
 		831A90B222EBB1D200204D8A /* FixedLocationAutocompleteInteractor.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = FixedLocationAutocompleteInteractor.swift; sourceTree = "<group>"; };
 		831A90B322EBB1D200204D8A /* FixedVehicleInteractor.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = FixedVehicleInteractor.swift; sourceTree = "<group>"; };
 		831A90B422EBB1D200204D8A /* FixedStopInteractor.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = FixedStopInteractor.swift; sourceTree = "<group>"; };
+		8358384B23232B5A00769164 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		835838622326EFBB00769164 /* RideOsCommonMocks.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = RideOsCommonMocks.swift; sourceTree = "<group>"; };
+		835838742326F05E00769164 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		835838752326F16D00769164 /* RideOsDriverMocks.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = RideOsDriverMocks.swift; sourceTree = "<group>"; };
+		8358387B2327015800769164 /* RideOsRiderTestsGeneratedMocks.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = RideOsRiderTestsGeneratedMocks.swift; sourceTree = "<group>"; };
+		83675B0523394A0E00B3481B /* MapboxPolylineSimplifierTest.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MapboxPolylineSimplifierTest.swift; sourceTree = "<group>"; };
+		83675B08233966FA00B3481B /* RideOsDriverTestsGeneratedMocks.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = RideOsDriverTestsGeneratedMocks.swift; sourceTree = "<group>"; };
 		83D53B8422F8EA25000F915E /* RideOsGoogleMapsTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = RideOsGoogleMapsTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		83D53B8822F8EA25000F915E /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		83D53B8E22F8ECA7000F915E /* DummyTest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DummyTest.swift; sourceTree = "<group>"; };
@@ -177,6 +186,7 @@
 		A88AD4530A15BC0DE06C04F1 /* Pods-RideOsGoogleMapsTests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-RideOsGoogleMapsTests.release.xcconfig"; path = "Target Support Files/Pods-RideOsGoogleMapsTests/Pods-RideOsGoogleMapsTests.release.xcconfig"; sourceTree = "<group>"; };
 		AE66AF8FB08CEA43D6FDDA1E /* Pods_RideOsCommonTests.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_RideOsCommonTests.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		BF7AFF09E63628C193C757D3 /* Pods-RideOsCommonTests.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-RideOsCommonTests.debug.xcconfig"; path = "Target Support Files/Pods-RideOsCommonTests/Pods-RideOsCommonTests.debug.xcconfig"; sourceTree = "<group>"; };
+		C538DC9CF4A2F87B4A7AF337 /* Pods-RideOsTestHelpers.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-RideOsTestHelpers.release.xcconfig"; path = "Target Support Files/Pods-RideOsTestHelpers/Pods-RideOsTestHelpers.release.xcconfig"; sourceTree = "<group>"; };
 		D5A78B60E608CF1AEB317F6C /* Pods-RideOsHereMapsTests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-RideOsHereMapsTests.release.xcconfig"; path = "Target Support Files/Pods-RideOsHereMapsTests/Pods-RideOsHereMapsTests.release.xcconfig"; sourceTree = "<group>"; };
 		F096EEC84817766DF95418A4 /* Pods-RideOsDriverTests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-RideOsDriverTests.release.xcconfig"; path = "Target Support Files/Pods-RideOsDriverTests/Pods-RideOsDriverTests.release.xcconfig"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -265,6 +275,14 @@
 			path = idle;
 			sourceTree = "<group>";
 		};
+		56850A47230E8E950084FE92 /* waiting_for_pickup */ = {
+			isa = PBXGroup;
+			children = (
+				56850A48230E8EB80084FE92 /* DefaultWaitingForPickupViewModelTest.swift */,
+			);
+			path = waiting_for_pickup;
+			sourceTree = "<group>";
+		};
 		83184CA622EF5ED2000530DC /* RideOsDriverTests */ = {
 			isa = PBXGroup;
 			children = (
@@ -280,6 +298,7 @@
 		83184CA722EF5ED2000530DC /* mocks */ = {
 			isa = PBXGroup;
 			children = (
+				83675B08233966FA00B3481B /* RideOsDriverTestsGeneratedMocks.swift */,
 				83184CA822EF5ED2000530DC /* RecordingGoOfflineListener.swift */,
 			);
 			path = mocks;
@@ -325,6 +344,7 @@
 		83184CB022EF5ED2000530DC /* mapbox */ = {
 			isa = PBXGroup;
 			children = (
+				83675B0523394A0E00B3481B /* MapboxPolylineSimplifierTest.swift */,
 				83184CB222EF5ED2000530DC /* RideOsRouteMapboxDirectionsViewModelTest.swift */,
 				83184CB322EF5ED3000530DC /* DefaultMapboxNavigationViewModelTest.swift */,
 			);
@@ -334,6 +354,7 @@
 		83184CB422EF5ED3000530DC /* online */ = {
 			isa = PBXGroup;
 			children = (
+				56850A47230E8E950084FE92 /* waiting_for_pickup */,
 				83184CB522EF5ED3000530DC /* DefaultOnlineViewModelTest.swift */,
 				83184CB622EF5ED3000530DC /* driving */,
 				56850A37230622A80084FE92 /* idle */,
@@ -398,6 +419,8 @@
 		831A8FED22E914A700204D8A = {
 			isa = PBXGroup;
 			children = (
+				835838642326EFFC00769164 /* RideOsDriverMocks */,
+				8358384A23232B2900769164 /* RideOsCommonMocks */,
 				83184CE222EF99E3000530DC /* RideOsHereMapsTests */,
 				83184CA622EF5ED2000530DC /* RideOsDriverTests */,
 				831A908522EBB1AB00204D8A /* RideOsRiderTests */,
@@ -681,6 +704,7 @@
 		831A90AB22EBB1D200204D8A /* mocks */ = {
 			isa = PBXGroup;
 			children = (
+				8358387B2327015800769164 /* RideOsRiderTestsGeneratedMocks.swift */,
 				831A90AC22EBB1D200204D8A /* RecordingConfirmLocationListener.swift */,
 			);
 			path = mocks;
@@ -689,7 +713,6 @@
 		831A90AD22EBB1D200204D8A /* interactors */ = {
 			isa = PBXGroup;
 			children = (
-				831A90AE22EBB1D200204D8A /* FixedHistoricalSearchInteractor.swift */,
 				831A90AF22EBB1D200204D8A /* UserStorageHistoricalSearchInteractorTest.swift */,
 				831A90B022EBB1D200204D8A /* FixedTripInteractor.swift */,
 				831A90B122EBB1D200204D8A /* FixedAvailableVehicleInteractor.swift */,
@@ -699,6 +722,24 @@
 				5685792322F8EF8800D808A2 /* ReplayingTripStateInteractor.swift */,
 			);
 			path = interactors;
+			sourceTree = "<group>";
+		};
+		8358384A23232B2900769164 /* RideOsCommonMocks */ = {
+			isa = PBXGroup;
+			children = (
+				835838622326EFBB00769164 /* RideOsCommonMocks.swift */,
+				8358384B23232B5A00769164 /* Info.plist */,
+			);
+			path = RideOsCommonMocks;
+			sourceTree = "<group>";
+		};
+		835838642326EFFC00769164 /* RideOsDriverMocks */ = {
+			isa = PBXGroup;
+			children = (
+				835838752326F16D00769164 /* RideOsDriverMocks.swift */,
+				835838742326F05E00769164 /* Info.plist */,
+			);
+			path = RideOsDriverMocks;
 			sourceTree = "<group>";
 		};
 		83D53B8522F8EA25000F915E /* RideOsGoogleMapsTests */ = {
@@ -715,8 +756,6 @@
 			children = (
 				BF7AFF09E63628C193C757D3 /* Pods-RideOsCommonTests.debug.xcconfig */,
 				3FAE7E241B69DCE3BF486FD8 /* Pods-RideOsCommonTests.release.xcconfig */,
-				60845883D35BB272AC323669 /* Pods-RideOsTestHelpers.debug.xcconfig */,
-				2CDDD4F15E5697D0122785CB /* Pods-RideOsTestHelpers.release.xcconfig */,
 				91673E9DFFC7728DD6B079FB /* Pods-RideOsRiderTests.debug.xcconfig */,
 				08FE71076F28807866636509 /* Pods-RideOsRiderTests.release.xcconfig */,
 				9A45B325652689693C29E1DA /* Pods-RideOsDriverTests.debug.xcconfig */,
@@ -725,6 +764,8 @@
 				D5A78B60E608CF1AEB317F6C /* Pods-RideOsHereMapsTests.release.xcconfig */,
 				7B8BEC4A7ED3C6F8DE5A99C1 /* Pods-RideOsGoogleMapsTests.debug.xcconfig */,
 				A88AD4530A15BC0DE06C04F1 /* Pods-RideOsGoogleMapsTests.release.xcconfig */,
+				177810991EA9E5D7AD080F17 /* Pods-RideOsTestHelpers.debug.xcconfig */,
+				C538DC9CF4A2F87B4A7AF337 /* Pods-RideOsTestHelpers.release.xcconfig */,
 			);
 			path = Pods;
 			sourceTree = "<group>";
@@ -747,6 +788,7 @@
 			buildConfigurationList = 83184CA522EF5EBE000530DC /* Build configuration list for PBXNativeTarget "RideOsDriverTests" */;
 			buildPhases = (
 				C6CDB96E7C366040876B81D2 /* [CP] Check Pods Manifest.lock */,
+				83675B07233965C700B3481B /* Generate Mocks */,
 				83184C9A22EF5EBE000530DC /* Sources */,
 				83184C9B22EF5EBE000530DC /* Frameworks */,
 				83184C9C22EF5EBE000530DC /* Resources */,
@@ -826,6 +868,7 @@
 			buildConfigurationList = 831A908B22EBB1AB00204D8A /* Build configuration list for PBXNativeTarget "RideOsRiderTests" */;
 			buildPhases = (
 				527D9BA4BEF30C39783A12F6 /* [CP] Check Pods Manifest.lock */,
+				8358387A2326FF8700769164 /* Generate Mocks */,
 				831A908022EBB1AB00204D8A /* Sources */,
 				831A908122EBB1AB00204D8A /* Frameworks */,
 				831A908222EBB1AB00204D8A /* Resources */,
@@ -1045,6 +1088,42 @@
 			shellPath = /bin/sh;
 			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
 			showEnvVarsInLog = 0;
+		};
+		8358387A2326FF8700769164 /* Generate Mocks */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+			);
+			name = "Generate Mocks";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "OUTPUT_FILE=\"${PROJECT_DIR}/${TARGET_NAME}/mocks/RideOsRiderTestsGeneratedMocks.swift\"\necho \"Generated Mocks File = ${OUTPUT_FILE}\"\n\nINPUT_DIR=\"${PROJECT_DIR}/../\"\necho \"Mocks Input Directory = ${INPUT_DIR}\"\n\n# Generate mock files, include as many input files as you'd like to create mocks for.\n\n\"${PODS_ROOT}/Cuckoo/run\" generate \\\n--testable \"RideOsRider,RideOsCommon\" \\\n--output \"${OUTPUT_FILE}\" \\\n\"${INPUT_DIR}/RideOsRider/interactors/HistoricalSearchInteractor.swift\"\n";
+		};
+		83675B07233965C700B3481B /* Generate Mocks */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+			);
+			name = "Generate Mocks";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "OUTPUT_FILE=\"${PROJECT_DIR}/${TARGET_NAME}/mocks/RideOsDriverTestsGeneratedMocks.swift\"\necho \"Generated Mocks File = ${OUTPUT_FILE}\"\n\nINPUT_DIR=\"${PROJECT_DIR}/../\"\necho \"Mocks Input Directory = ${INPUT_DIR}\"\n\n# Generate mock files, include as many input files as you'd like to create mocks for.\n\n\"${PODS_ROOT}/Cuckoo/run\" generate \\\n--testable \"RideOsDriver,RideOsCommon\" \\\n--output \"${OUTPUT_FILE}\" \\\n\"${INPUT_DIR}/RideOsCommon/geo/PolylineSimplifier.swift\"\n\n";
 		};
 		836FDA8922FB649400CFFF51 /* Run SwiftFormat and SwiftLint */ = {
 			isa = PBXShellScriptBuildPhase;
@@ -1295,12 +1374,15 @@
 			buildActionMask = 2147483647;
 			files = (
 				560712D4230384B50003CFF3 /* DefaultOfflineViewModelTest.swift in Sources */,
+				83675B09233966FB00B3481B /* RideOsDriverTestsGeneratedMocks.swift in Sources */,
 				83184CD022EF5ED3000530DC /* SimulatedDeviceLocatorTest.swift in Sources */,
 				83184CCB22EF5ED3000530DC /* DefaultOnlineViewModelTest.swift in Sources */,
 				83184CD322EF5ED3000530DC /* FixedDriverPlanInteractor.swift in Sources */,
+				56850A49230E8EB80084FE92 /* DefaultWaitingForPickupViewModelTest.swift in Sources */,
 				83184CC922EF5ED3000530DC /* RideOsRouteMapboxDirectionsViewModelTest.swift in Sources */,
 				83184CD222EF5ED3000530DC /* FixedDriverVehicleInteractor.swift in Sources */,
 				83184CC522EF5ED3000530DC /* DefaultMainViewModelTest.swift in Sources */,
+				83675B0623394A0E00B3481B /* MapboxPolylineSimplifierTest.swift in Sources */,
 				83184CC422EF5ED3000530DC /* RecordingGoOfflineListener.swift in Sources */,
 				83184CD122EF5ED3000530DC /* RecordingMapboxDirectionsInteractor.swift in Sources */,
 				83184CCE22EF5ED3000530DC /* DefaultDrivingViewModelTest.swift in Sources */,
@@ -1364,6 +1446,7 @@
 				831A90C222EBB1D200204D8A /* DefaultMatchedToVehicleViewModelTest.swift in Sources */,
 				831A90CC22EBB1D200204D8A /* FixedLocationAutocompleteInteractor.swift in Sources */,
 				831A90C022EBB1D200204D8A /* DefaultWaitingForAssignmentViewModelTest.swift in Sources */,
+				8358387C2327015800769164 /* RideOsRiderTestsGeneratedMocks.swift in Sources */,
 				831A90C622EBB1D200204D8A /* DefaultStartScreenViewModelTest.swift in Sources */,
 				831A90BA22EBB1D200204D8A /* RecordingConfirmTripListener.swift in Sources */,
 				831A90BF22EBB1D200204D8A /* DefaultCurrentTripViewModelTest.swift in Sources */,
@@ -1376,7 +1459,6 @@
 				831A90C522EBB1D200204D8A /* DefaultOnTripViewModelTest.swift in Sources */,
 				831A90CE22EBB1D200204D8A /* FixedStopInteractor.swift in Sources */,
 				831A90CA22EBB1D200204D8A /* FixedTripInteractor.swift in Sources */,
-				831A90C822EBB1D200204D8A /* FixedHistoricalSearchInteractor.swift in Sources */,
 				5685792422F8EF8800D808A2 /* ReplayingTripStateInteractor.swift in Sources */,
 				831A90B822EBB1D200204D8A /* DefaultSetPickupDropoffViewModelTest.swift in Sources */,
 				831A90BD22EBB1D200204D8A /* DefaultConfirmLocationViewModelTest.swift in Sources */,
@@ -1641,7 +1723,7 @@
 		};
 		831A901922E9158100204D8A /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 60845883D35BB272AC323669 /* Pods-RideOsTestHelpers.debug.xcconfig */;
+			baseConfigurationReference = 177810991EA9E5D7AD080F17 /* Pods-RideOsTestHelpers.debug.xcconfig */;
 			buildSettings = {
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_IDENTITY = "";
@@ -1669,7 +1751,7 @@
 		};
 		831A901A22E9158100204D8A /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 2CDDD4F15E5697D0122785CB /* Pods-RideOsTestHelpers.release.xcconfig */;
+			baseConfigurationReference = C538DC9CF4A2F87B4A7AF337 /* Pods-RideOsTestHelpers.release.xcconfig */;
 			buildSettings = {
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_IDENTITY = "";

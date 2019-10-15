@@ -24,40 +24,90 @@ public class DefaultConfirmingArrivalViewModel: ConfirmingArrivalViewModel {
     private static let geocodeRepeatBehavior = RepeatBehavior.immediate(maxCount: 2)
 
     public struct Style {
-        public let mapZoomLevel: Float
         public let destinationIcon: DrawableMarkerIcon
+        public let vehicleIcon: DrawableMarkerIcon
 
-        public init(mapZoomLevel: Float = 15.0,
-                    destinationIcon: DrawableMarkerIcon = DrawableMarkerIcons.dropoffPin()) {
-            self.mapZoomLevel = mapZoomLevel
+        public init(destinationIcon: DrawableMarkerIcon = DrawableMarkerIcons.dropoffPin(),
+                    vehicleIcon: DrawableMarkerIcon = DrawableMarkerIcons.car()) {
             self.destinationIcon = destinationIcon
+            self.vehicleIcon = vehicleIcon
         }
-    }
-
-    private let destination: CLLocationCoordinate2D
-    private let style: Style
-    private let geocodeInteractor: GeocodeInteractor
-    private let schedulerProvider: SchedulerProvider
-    private let logger: Logger
-
-    public init(destination: CLLocationCoordinate2D,
-                style: Style = Style(),
-                geocodeInteractor: GeocodeInteractor = DriverDependencyRegistry.instance.mapsDependencyFactory.geocodeInteractor,
-                schedulerProvider: SchedulerProvider = DefaultSchedulerProvider(),
-                logger: Logger = LoggerDependencyRegistry.instance.logger) {
-        self.destination = destination
-        self.style = style
-        self.geocodeInteractor = geocodeInteractor
-        self.schedulerProvider = schedulerProvider
-        self.logger = logger
     }
 
     public var arrivalDetailText: Observable<String> {
         return reverseGeocodeObservable().map { $0.displayName }
     }
 
+    public var confirmingArrivalState: Observable<ConfirmingArrivalViewState> {
+        return stateMachine.observeCurrentState()
+    }
+
+    private let destinationWaypoint: VehiclePlan.Waypoint
+    private let driverVehicleInteractor: DriverVehicleInteractor
+    private let geocodeInteractor: GeocodeInteractor
+    private let userStorageReader: UserStorageReader
+    private let deviceLocator: DeviceLocator
+    private let style: Style
+    private let schedulerProvider: SchedulerProvider
+    private let logger: Logger
+    private let stateMachine: StateMachine<ConfirmingArrivalViewState>
+    private let disposeBag: DisposeBag
+
+    public init(destinationWaypoint: VehiclePlan.Waypoint,
+                deviceLocator: DeviceLocator = PotentiallySimulatedDeviceLocator(),
+                driverVehicleInteractor: DriverVehicleInteractor = DefaultDriverVehicleInteractor(),
+                geocodeInteractor: GeocodeInteractor =
+                    DriverDependencyRegistry.instance.mapsDependencyFactory.geocodeInteractor,
+                userStorageReader: UserStorageReader = UserDefaultsUserStorageReader(),
+                style: Style = Style(),
+                schedulerProvider: SchedulerProvider = DefaultSchedulerProvider(),
+                logger: Logger = LoggerDependencyRegistry.instance.logger) {
+        self.destinationWaypoint = destinationWaypoint
+        self.driverVehicleInteractor = driverVehicleInteractor
+        self.geocodeInteractor = geocodeInteractor
+        self.userStorageReader = userStorageReader
+        self.deviceLocator = deviceLocator
+        self.style = style
+        self.schedulerProvider = schedulerProvider
+        self.logger = logger
+
+        stateMachine = StateMachine(schedulerProvider: schedulerProvider,
+                                    initialState: .arrivalUnconfirmed,
+                                    logger: logger)
+        disposeBag = DisposeBag()
+    }
+
+    public func confirmArrival() {
+        guard let currentState = try? stateMachine.getCurrentState() else {
+            return
+        }
+
+        switch currentState {
+        case .arrivalUnconfirmed, .failedToConfirmArrival:
+            stateMachine.transition { _ in .confirmingArrival }
+
+            driverVehicleInteractor.finishSteps(vehicleId: userStorageReader.userId,
+                                                taskId: destinationWaypoint.taskId,
+                                                stepIds: [String](destinationWaypoint.stepIds))
+                .observeOn(schedulerProvider.io())
+                .asObservable()
+                .logErrorsAndRetry(logger: logger)
+                .subscribe(
+                    onError: { [stateMachine] _ in
+                        stateMachine.transition { _ in .failedToConfirmArrival }
+                    },
+                    onCompleted: { [stateMachine] in
+                        stateMachine.transition { _ in .confirmedArrival }
+                    }
+                )
+                .disposed(by: disposeBag)
+        default:
+            return
+        }
+    }
+
     private func reverseGeocodeObservable() -> Observable<GeocodedLocationModel> {
-        return geocodeInteractor.reverseGeocode(location: destination, maxResults: 1)
+        return geocodeInteractor.reverseGeocode(location: destinationWaypoint.action.destination, maxResults: 1)
             .observeOn(schedulerProvider.computation())
             .logErrors(logger: logger)
             .retry(DefaultConfirmingArrivalViewModel.geocodeRepeatBehavior)
@@ -75,16 +125,23 @@ extension DefaultConfirmingArrivalViewModel: MapStateProvider {
     }
 
     public func getCameraUpdates() -> Observable<CameraUpdate> {
-        return reverseGeocodeObservable().map { [style] in
-            CameraUpdate.centerAndZoom(center: $0.location, zoom: style.mapZoomLevel)
-        }
+        return Observable.combineLatest(deviceLocator.observeCurrentLocation(),
+                                        Observable.just(destinationWaypoint.action.destination))
+            .map { currentLocation, destinationCoordinate in
+                CameraUpdate.fitLatLngBounds(LatLngBounds(containingCoordinates: [currentLocation.coordinate,
+                                                                                  destinationCoordinate]))
+            }
     }
 
     public func getMarkers() -> Observable<[String: DrawableMarker]> {
-        return reverseGeocodeObservable().map { [style] in
-            [
-                "destination_icon": DrawableMarker(coordinate: $0.location, icon: style.destinationIcon),
-            ]
-        }
+        return Observable.combineLatest(deviceLocator.observeCurrentLocation(), reverseGeocodeObservable())
+            .map { [style] currentLocation, destination in
+                [
+                    "vehicle": DrawableMarker(coordinate: currentLocation.coordinate,
+                                              heading: currentLocation.course,
+                                              icon: style.vehicleIcon),
+                    "destination": DrawableMarker(coordinate: destination.location, icon: style.destinationIcon),
+                ]
+            }
     }
 }

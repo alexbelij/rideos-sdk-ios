@@ -28,7 +28,7 @@ public class DriverDependencyRegistry {
 
     public static func create(driverDependencyFactory: DriverDependencyFactory = DefaultDriverDependencyFactory(),
                               mapsDependencyFactory: MapsDependencyFactory,
-                              logger: Logger = ConsoleLogger()) {
+                              logger: Logger) {
         globalInstance = DriverDependencyRegistry(driverDependencyFactory: driverDependencyFactory,
                                                   mapsDependencyFactory: mapsDependencyFactory,
                                                   logger: logger)

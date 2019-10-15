@@ -20,7 +20,7 @@ import RxSwift
 
 public typealias MatchedToVehicleDialog = BottomDialogStackView & MatchedToVehicleView
 
-public class MatchedToVehicleViewController: BackgroundMapViewController, PassengerStateObserver {
+public class MatchedToVehicleViewController: BackgroundMapWithDrawerViewController, PassengerStateObserver {
     private let disposeBag = DisposeBag()
 
     private let dialogView: MatchedToVehicleDialog
@@ -28,7 +28,7 @@ public class MatchedToVehicleViewController: BackgroundMapViewController, Passen
     private let urlLauncher: UrlLauncher
 
     public required init?(coder _: NSCoder) {
-        fatalError("MatchedToVehicleViewController does not support NSCoder")
+        fatalError("#(function) is unimplemented")
     }
 
     public init(dialogView: MatchedToVehicleDialog,
@@ -39,7 +39,9 @@ public class MatchedToVehicleViewController: BackgroundMapViewController, Passen
         self.dialogView = dialogView
         self.viewModel = viewModel
         urlLauncher = DefaultUrlLauncher()
-        super.init(mapViewController: mapViewController)
+
+        super.init(backgroundMapViewController: BackgroundMapViewController(mapViewController: mapViewController),
+                   drawerContentView: dialogView)
 
         viewModel.dialogModel
             .observeOn(schedulerProvider.mainThread())
@@ -77,13 +79,6 @@ public class MatchedToVehicleViewController: BackgroundMapViewController, Passen
 
     public override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
-        presentBottomDialogStackView(dialogView) { [mapViewController, viewModel] in
-            mapViewController.connect(mapStateProvider: viewModel)
-        }
-    }
-
-    public override func viewWillDisappear(_ animated: Bool) {
-        super.viewWillDisappear(animated)
-        dismissBottomDialogStackView(dialogView)
+        backgroundMapViewController.mapViewController.connect(mapStateProvider: viewModel)
     }
 }

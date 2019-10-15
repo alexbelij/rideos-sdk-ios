@@ -21,6 +21,7 @@ public class DefaultOfflineViewModel: OfflineViewModel {
     private let userStorageReader: UserStorageReader
     private let driverVehicleInteractor: DriverVehicleInteractor
     private let stateMachine: StateMachine<OfflineViewState>
+    private let schedulerProvider: SchedulerProvider
     private let logger: Logger
     private let disposeBag: DisposeBag
 
@@ -34,6 +35,7 @@ public class DefaultOfflineViewModel: OfflineViewModel {
                 logger: Logger = LoggerDependencyRegistry.instance.logger) {
         self.userStorageReader = userStorageReader
         self.driverVehicleInteractor = driverVehicleInteractor
+        self.schedulerProvider = schedulerProvider
         self.logger = logger
 
         stateMachine = StateMachine(schedulerProvider: schedulerProvider, initialState: .offline, logger: logger)
@@ -50,6 +52,7 @@ public class DefaultOfflineViewModel: OfflineViewModel {
             stateMachine.transition { _ in .goingOnline }
 
             driverVehicleInteractor.markVehicleReady(vehicleId: userStorageReader.userId)
+                .observeOn(schedulerProvider.io())
                 .asObservable()
                 .logErrorsAndRetry(logger: logger)
                 .subscribe(

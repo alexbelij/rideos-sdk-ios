@@ -17,6 +17,12 @@ import Foundation
 import RideOsCommon
 
 open class DefaultRiderDependencyFactory: RiderDependencyFactory {
+    private let pushNotificationManagerInstance: PushNofificationManager?
+
+    public init(pushNotificationManager: PushNofificationManager? = nil) {
+        pushNotificationManagerInstance = pushNotificationManager
+    }
+
     open var routeInteractor: RouteInteractor {
         return RideOsRouteInteractor()
     }
@@ -29,5 +35,7 @@ open class DefaultRiderDependencyFactory: RiderDependencyFactory {
         return DefaultPreTripViewModel(listener: listener, enableSeatCountSelection: true)
     }
 
-    public init() {}
+    open var pushNotificationManager: PushNofificationManager? {
+        return pushNotificationManagerInstance
+    }
 }

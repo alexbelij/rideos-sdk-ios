@@ -17,9 +17,17 @@ import Foundation
 import RideOsCommon
 
 open class DefaultDriverDependencyFactory: DriverDependencyFactory {
+    private let pushNotificationManagerInstance: PushNofificationManager?
+
+    public init(pushNotificationManager: PushNofificationManager? = nil) {
+        pushNotificationManagerInstance = pushNotificationManager
+    }
+
     open var fleetInteractor: FleetInteractor {
         return DefaultFleetInteractor()
     }
 
-    public init() {}
+    open var pushNotificationManager: PushNofificationManager? {
+        return pushNotificationManagerInstance
+    }
 }

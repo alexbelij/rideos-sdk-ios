@@ -1,6 +1,6 @@
 Pod::Spec.new do |s|
   s.name             = 'RideOsDriver'
-  s.version          = '0.1.0'
+  s.version          = '0.2.0'
   s.summary          = 'rideOS SDK for building ridehailing driver apps'
 
   s.description      = <<-DESC
@@ -26,6 +26,7 @@ Pod::Spec.new do |s|
   s.dependency 'RxOptional', '~> 3.6'
   s.dependency 'SideMenu', '~> 5.0'
   s.dependency 'MapboxNavigation', '~> 0.34'
+  s.dependency 'Turf', '~> 0.3'
   
   s.source_files = 'RideOsDriver/**/*.{swift, h, m}'
   s.resource_bundles = {

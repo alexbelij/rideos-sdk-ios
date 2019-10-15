@@ -19,6 +19,9 @@ import NMAKit
 import RideOsCommon
 
 public class HereMapView: UIMapView {
+    private static let markerLayer = NMAMapLayerType.foreground
+    private static let polylineLayer = NMAMapLayerType.road
+
     public var mapInsets: UIEdgeInsets
 
     private let pixelsPerPoint: CGFloat
@@ -95,9 +98,10 @@ public class HereMapView: UIMapView {
             let marker = markers[key]!
             let nmaMarker = NMAMapMarker(geoCoordinates: marker.coordinate.nmaGeoCoordinates(),
                                          image: marker.icon.image.rotated(byDegrees: CGFloat(marker.heading)))
+            nmaMarker.mapLayerType = HereMapView.markerLayer
             nmaMarker.anchorOffset = marker.icon.groundAnchor
             nmaMarkers[key] = nmaMarker
-            mapView.add(mapObject: nmaMarker)
+            mapView.add(mapObjects: [nmaMarker], to: HereMapView.markerLayer)
         }
 
         // Remove old markers
@@ -121,11 +125,12 @@ public class HereMapView: UIMapView {
         for path in paths {
             // TODO(chrism): Add support for dashed polylines
             let polyline = NMAMapPolyline(vertices: path.coordinates.map { $0.nmaGeoCoordinates() })
+            polyline.mapLayerType = HereMapView.polylineLayer
             polyline.lineColor = path.color
             polyline.lineWidth = UInt(path.width * Float(pixelsPerPoint))
             nmaPolylines.append(polyline)
         }
-        mapView.add(mapObjects: nmaPolylines)
+        mapView.add(mapObjects: nmaPolylines, to: HereMapView.polylineLayer)
     }
 
     public var visibleRegion: LatLngBounds {

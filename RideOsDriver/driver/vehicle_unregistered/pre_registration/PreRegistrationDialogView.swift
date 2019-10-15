@@ -18,35 +18,55 @@ import RxCocoa
 import UIKit
 
 public class PreRegistrationDialogView: BottomDialogStackView {
-    private static let headerLabelText =
-        RideOsDriverResourceLoader.instance.getString("ai.rideos.driver.vehicle-unregistered.header-text")
-
-    private static let registerVehicleButtonTitle =
-        RideOsDriverResourceLoader.instance.getString(
-            "ai.rideos.driver.vehicle-unregistered.register-vehicle-button.title")
-
     public var registerVehicleTapEvents: ControlEvent<Void> {
         return registerVehicleButton.tapEvents
     }
 
-    private let headerLabel = BottomDialogStackView.headerLabel(withText: PreRegistrationDialogView.headerLabelText)
     private let registerVehicleButton = StackedActionButtonContainerView(
-        title: PreRegistrationDialogView.registerVehicleButtonTitle
+        title: RideOsDriverResourceLoader.instance.getString(
+            "ai.rideos.driver.vehicle-unregistered.register-vehicle-button.title"
+        )
     )
 
     public init() {
-        // override headerLabel defaults
-        headerLabel.numberOfLines = 0
-        headerLabel.textAlignment = NSTextAlignment.left
-
         super.init(stackedElements: [
-            .view(view: InsetView(view: headerLabel, margins: UIEdgeInsets(floatLiteral: 16.0))),
-            .customSpacing(spacing: 16),
+            .customSpacing(spacing: 48.0),
+            .view(view: PreRegistrationDialogView.alertIconWithLabelView()),
+            .customSpacing(spacing: 48.0),
             .view(view: registerVehicleButton),
         ])
     }
 
     required init?(coder _: NSCoder) {
         fatalError("\(#function) has not been implemented")
+    }
+}
+
+extension PreRegistrationDialogView {
+    private static func alertIconWithLabelView() -> UIView {
+        let containerView = UIView(frame: .zero)
+
+        let alertIconView = UIImageView(image: DriverImages.alert())
+
+        let label = UILabel()
+        label.font = UIFont.systemFont(ofSize: 16)
+        label.text = RideOsDriverResourceLoader.instance.getString("ai.rideos.driver.vehicle-unregistered.header-text")
+        label.textAlignment = .center
+        label.textColor = UIColor.black
+        label.numberOfLines = 0
+        label.textAlignment = NSTextAlignment.left
+
+        containerView.addSubview(alertIconView)
+        alertIconView.translatesAutoresizingMaskIntoConstraints = false
+        alertIconView.leftAnchor.constraint(equalTo: containerView.leftAnchor, constant: 16.0).isActive = true
+        alertIconView.centerYAnchor.constraint(equalTo: containerView.centerYAnchor).isActive = true
+
+        containerView.addSubview(label)
+        label.translatesAutoresizingMaskIntoConstraints = false
+        label.leftAnchor.constraint(equalTo: alertIconView.rightAnchor, constant: 16.0).isActive = true
+        label.rightAnchor.constraint(equalTo: containerView.rightAnchor, constant: -16.0).isActive = true
+        label.centerYAnchor.constraint(equalTo: containerView.centerYAnchor).isActive = true
+
+        return containerView
     }
 }

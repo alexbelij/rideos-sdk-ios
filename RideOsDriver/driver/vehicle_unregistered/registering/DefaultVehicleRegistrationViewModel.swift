@@ -25,49 +25,23 @@ public class DefaultVehicleRegistrationViewModel: VehicleRegistrationViewModel {
     private let vehicleRegistrationInfoRelay =
         BehaviorRelay(value: VehicleRegistration(name: "", phoneNumber: "",
                                                  licensePlate: "", riderCapacity: 0))
-    private let registrationSubject = BehaviorSubject(value: false)
 
+    private let resolvedFleet: ResolvedFleet
     private let userStorageReader: UserStorageReader
-    private let userStorageWriter: UserStorageWriter
     private let driverVehicleInteractor: DriverVehicleInteractor
     private let schedulerProvider: SchedulerProvider
-    private weak var registerVehicleListener: RegisterVehicleListener?
 
-    public init(registerVehicleListener: RegisterVehicleListener,
-                schedulerProvider: SchedulerProvider = DefaultSchedulerProvider(),
+    public init(schedulerProvider: SchedulerProvider = DefaultSchedulerProvider(),
                 driverVehicleInteractor: DriverVehicleInteractor = DefaultDriverVehicleInteractor(),
                 resolvedFleet: ResolvedFleet = ResolvedFleet.instance,
-                userStorageReader: UserStorageReader = UserDefaultsUserStorageReader(),
-                userStorageWriter: UserStorageWriter = UserDefaultsUserStorageWriter()) {
-        self.registerVehicleListener = registerVehicleListener
+                userStorageReader: UserStorageReader = UserDefaultsUserStorageReader()) {
         self.schedulerProvider = schedulerProvider
         self.driverVehicleInteractor = driverVehicleInteractor
+        self.resolvedFleet = resolvedFleet
         self.userStorageReader = userStorageReader
-        self.userStorageWriter = userStorageWriter
-
-        registrationSubject
-            .observeOn(schedulerProvider.mainThread())
-            .distinctUntilChanged()
-            .filter { $0 }
-            .withLatestFrom(vehicleRegistrationInfoRelay)
-            .withLatestFrom(resolvedFleet.resolvedFleet) { ($0, $1) }
-            .flatMapLatest { [unowned self] registrationInfo, fleetInfo in
-                !DefaultVehicleRegistrationViewModel.isVehicleRegistrationInfoValid(vehicleInfo: registrationInfo) ?
-                    Single.error(InvalidVehicleRegistrationInfoError.invalidInfo("Invalid registration info")) :
-                    driverVehicleInteractor
-                    .createVehicle(vehicleId: userStorageReader.userId,
-                                   fleetId: fleetInfo.fleetId,
-                                   vehicleInfo: registrationInfo)
-                    .andThen(self.writeVehicleInfoToStorage(vehicleInfo: registrationInfo))
-                    .andThen(Single.just(registerVehicleListener.finishVehicleRegistration()))
-            }
-            .subscribe(onCompleted: { [registrationSubject] in
-                registrationSubject.onNext(false)
-            })
-            .disposed(by: disposeBag)
     }
 
-    public func setFirstNameText(_ text: String) {
+    public func setPreferredNameText(_ text: String) {
         let oldVehicleInfo = vehicleRegistrationInfoRelay.value
         let newVehicleInfo = VehicleRegistration(name: text,
                                                  phoneNumber: oldVehicleInfo.phoneNumber,
@@ -103,25 +77,37 @@ public class DefaultVehicleRegistrationViewModel: VehicleRegistrationViewModel {
         vehicleRegistrationInfoRelay.accept(newVehicleInfo)
     }
 
-    public func submit() {
-        registrationSubject.onNext(true)
-    }
+    public func submit() -> Completable {
+        return resolvedFleet.resolvedFleet.first()
+            .flatMapCompletable { [unowned self] fleetInfo -> Completable in
+                guard let fleetInfo = fleetInfo else {
+                    return Completable.error(
+                        InvalidVehicleRegistrationInfoError.invalidInfo("No resolved fleet info")
+                    )
+                }
 
-    public func cancel() {
-        registerVehicleListener?.cancelVehicleRegistration()
+                let registrationInfo = self.vehicleRegistrationInfoRelay.value
+
+                guard DefaultVehicleRegistrationViewModel.isVehicleRegistrationInfoValid(registrationInfo) else {
+                    return Completable.error(
+                        InvalidVehicleRegistrationInfoError.invalidInfo("Invalid registration info")
+                    )
+                }
+
+                return self.driverVehicleInteractor.createVehicle(
+                    vehicleId: self.userStorageReader.userId,
+                    fleetId: fleetInfo.fleetId,
+                    vehicleInfo: registrationInfo
+                )
+            }
     }
 
     public func isSubmitActionEnabled() -> Observable<Bool> {
         return vehicleRegistrationInfoRelay.asObservable()
-            .map { info in DefaultVehicleRegistrationViewModel.isVehicleRegistrationInfoValid(vehicleInfo: info) }
+            .map { info in DefaultVehicleRegistrationViewModel.isVehicleRegistrationInfoValid(info) }
     }
 
-    private func writeVehicleInfoToStorage(vehicleInfo: VehicleRegistration) -> Completable {
-        userStorageWriter.set(key: DriverSettingsKeys.vehicleInfo, value: vehicleInfo)
-        return Completable.empty()
-    }
-
-    private static func isVehicleRegistrationInfoValid(vehicleInfo: VehicleRegistration) -> Bool {
+    private static func isVehicleRegistrationInfoValid(_ vehicleInfo: VehicleRegistration) -> Bool {
         return vehicleInfo.name.isNotEmpty && vehicleInfo.phoneNumber.isNotEmpty
             && vehicleInfo.licensePlate.isNotEmpty && vehicleInfo.riderCapacity > 0
     }

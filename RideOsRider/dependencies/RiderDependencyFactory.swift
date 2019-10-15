@@ -19,4 +19,5 @@ import RideOsCommon
 public protocol RiderDependencyFactory: CommonDependencyFactory {
     var routeInteractor: RouteInteractor { get }
     func preTripViewModel(withListener listener: PreTripListener) -> PreTripViewModel
+    var pushNotificationManager: PushNofificationManager? { get }
 }

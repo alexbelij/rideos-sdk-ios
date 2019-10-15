@@ -17,5 +17,5 @@ import Foundation
 import RideOsCommon
 
 public protocol DriverDependencyFactory: CommonDependencyFactory {
-    // TODO(chrism/mmontalbo): Add other driver dependencies here
+    var pushNotificationManager: PushNofificationManager? { get }
 }

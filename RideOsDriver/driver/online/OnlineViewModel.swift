@@ -17,6 +17,5 @@ import Foundation
 import RxSwift
 
 public protocol OnlineViewModel: GoOfflineListener {
-    func complete(waypoint: VehiclePlan.Waypoint)
     func getOnlineViewState() -> Observable<OnlineViewState>
 }

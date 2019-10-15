@@ -16,6 +16,14 @@
 import Foundation
 
 public class DriverImages {
+    public static func alert() -> UIImage {
+        return RideOsDriverResourceLoader.instance.getImage("ai.rideos.driver.alert")
+    }
+
+    public static func clear() -> UIImage {
+        return RideOsDriverResourceLoader.instance.getImage("ai.rideos.driver.clear")
+    }
+
     public static func close() -> UIImage {
         return RideOsDriverResourceLoader.instance.getImage("ai.rideos.driver.close")
     }

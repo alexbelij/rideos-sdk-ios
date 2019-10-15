@@ -1,6 +1,6 @@
 Pod::Spec.new do |s|
   s.name             = 'RideOsRider'
-  s.version          = '0.1.0'
+  s.version          = '0.2.0'
   s.summary          = 'rideOS SDK for building ridehailing rider apps'
 
   s.description      = <<-DESC
@@ -22,6 +22,7 @@ Pod::Spec.new do |s|
   s.dependency 'RxSwiftExt', '~> 3.4'
   s.dependency 'RxOptional', '~> 3.6'
   s.dependency 'SideMenu', '~> 5.0'
+	s.dependency 'Pulley', '~> 2.7'
   
   s.source_files = 'RideOsRider/**/*.{swift, h, m}'
   s.resource_bundles = {

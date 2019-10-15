@@ -17,7 +17,6 @@ import Foundation
 
 public class Shadows {
     public class func enableShadows(onView view: UIView) {
-        view.layer.cornerRadius = 4.0
         view.layer.shadowColor = RideOsCommonResourceLoader.instance.getColor("ai.rideos.common.shadow.color").cgColor
         view.layer.shadowOpacity = 1.0
         view.layer.shadowRadius = 4.0

@@ -22,15 +22,33 @@ public class DefaultFleetOptionResolver: FleetOptionResolver {
     private static let fleetInteractorRepeatBehavior = RepeatBehavior.immediate(maxCount: 5)
 
     private let fleetInteractor: FleetInteractor
+    private let defaultFleetInfo: FleetInfo
     private let deviceLocator: DeviceLocator
     private let schedulerProvider: SchedulerProvider
     private let logger: Logger
 
+    public static var defaultFleetId: String {
+        guard let infoDictionary = Bundle.main.infoDictionary else {
+            fatalError("Can't load Info.plist")
+        }
+
+        guard let fleetId = infoDictionary["DefaultFleetID"] as? String else {
+            fatalError("DefaultFleetID must be specified in the main Bundle's Info.plist")
+        }
+
+        return fleetId
+    }
+
     public init(fleetInteractor: FleetInteractor = CommonDependencyRegistry.instance.commonDependencyFactory.fleetInteractor,
+                defaultFleetId: String = DefaultFleetOptionResolver.defaultFleetId,
                 deviceLocator: DeviceLocator = CoreLocationDeviceLocator(),
                 schedulerProvider: SchedulerProvider = DefaultSchedulerProvider(),
                 logger: Logger = LoggerDependencyRegistry.instance.logger) {
         self.fleetInteractor = fleetInteractor
+        defaultFleetInfo = FleetInfo(fleetId: defaultFleetId,
+                                     displayName: "",
+                                     center: nil,
+                                     isPhantom: false)
         self.deviceLocator = deviceLocator
         self.schedulerProvider = schedulerProvider
         self.logger = logger
@@ -76,9 +94,9 @@ public class DefaultFleetOptionResolver: FleetOptionResolver {
             )
             .subscribeOn(schedulerProvider.io())
             .observeOn(schedulerProvider.computation())
-            .map { location, availableFleets in
+            .map { [defaultFleetInfo] location, availableFleets in
                 DefaultFleetOptionResolver.findBestFleet(location: location,
-                                                         availableFleets: availableFleets) ?? FleetInfo.defaultFleetInfo
+                                                         availableFleets: availableFleets) ?? defaultFleetInfo
             }
     }
 

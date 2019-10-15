@@ -29,7 +29,6 @@ public class DefaultOnlineViewModel: OnlineViewModel {
     private let currentPlan = BehaviorSubject(value: VehiclePlan(waypoints: []))
 
     private weak var goOfflineListener: GoOfflineListener?
-    private let driverVehicleInteractor: DriverVehicleInteractor
     private let driverPlanInteractor: DriverPlanInteractor
     private let vehicleStateSynchronizer: VehicleStateSynchronizer
     private let userStorageReader: UserStorageReader
@@ -38,7 +37,6 @@ public class DefaultOnlineViewModel: OnlineViewModel {
     private let logger: Logger
 
     public init(goOfflineListener: GoOfflineListener,
-                driverVehicleInteractor: DriverVehicleInteractor = DefaultDriverVehicleInteractor(),
                 driverPlanInteractor: DriverPlanInteractor = DefaultDriverPlanInteractor(),
                 vehicleStateSynchronizer: VehicleStateSynchronizer = DefaultVehicleStateSynchronizer(),
                 userStorageReader: UserStorageReader = UserDefaultsUserStorageReader(),
@@ -46,7 +44,6 @@ public class DefaultOnlineViewModel: OnlineViewModel {
                 schedulerProvider: SchedulerProvider = DefaultSchedulerProvider(),
                 logger: Logger = LoggerDependencyRegistry.instance.logger) {
         self.goOfflineListener = goOfflineListener
-        self.driverVehicleInteractor = driverVehicleInteractor
         self.driverPlanInteractor = driverPlanInteractor
         self.vehicleStateSynchronizer = vehicleStateSynchronizer
         self.userStorageReader = userStorageReader
@@ -56,17 +53,6 @@ public class DefaultOnlineViewModel: OnlineViewModel {
 
         startPollingForPlanUpdates()
         startSynchronizingVehicleState(deviceLocator: deviceLocator)
-    }
-
-    public func complete(waypoint: VehiclePlan.Waypoint) {
-        driverVehicleInteractor.finishSteps(vehicleId: userStorageReader.userId,
-                                            taskId: waypoint.taskId,
-                                            stepIds: [String](waypoint.stepIds))
-            .observeOn(schedulerProvider.io())
-            .retry(DefaultOnlineViewModel.interactorRetryCount)
-            .subscribe(onCompleted: { [forceGetPlanSubject] in forceGetPlanSubject.onNext(true) },
-                       onError: { logError($0.humanReadableDescription) })
-            .disposed(by: disposeBag)
     }
 
     public func getOnlineViewState() -> Observable<OnlineViewState> {
@@ -114,6 +100,10 @@ public class DefaultOnlineViewModel: OnlineViewModel {
                 self.vehicleStateSynchronizer.synchronizeVehicleState(vehicleId: self.userStorageReader.userId,
                                                                       vehicleCoordinate: latestLocation.coordinate,
                                                                       vehicleHeading: latestLocation.course)
+                    .asObservable()
+                    .logErrors(logger: self.logger)
+                    .catchErrorJustComplete()
+                    .asCompletable()
             }
             .subscribe()
             .disposed(by: disposeBag)

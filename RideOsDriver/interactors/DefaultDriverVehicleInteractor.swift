@@ -113,11 +113,15 @@ public class DefaultDriverVehicleInteractor: DriverVehicleInteractor {
 
     private func setVehicleReadiness(vehicleId: String, readyForDispatch: Bool) -> Completable {
         return Completable.create { [driverVehicleService] completable in
-            let setReadinessRequest = RideHailDriverSetReadinessRequest()
-            setReadinessRequest.vehicleId = vehicleId
-            setReadinessRequest.readyForDispatch = readyForDispatch
+            let request = RideHailDriverUpdateVehicleStateRequest()
+            request.id_p = vehicleId
+            if readyForDispatch {
+                request.setToReady = RideHailDriverUpdateVehicleStateRequest_SetToReady()
+            } else {
+                request.setToNotReady = RideHailDriverUpdateVehicleStateRequest_SetToNotReady()
+            }
 
-            let call = driverVehicleService.rpcToSetReadiness(with: setReadinessRequest) { response, error in
+            let call = driverVehicleService.rpcToUpdateVehicleState(with: request) { response, error in
                 guard error == nil else {
                     completable(.error(error!))
                     return

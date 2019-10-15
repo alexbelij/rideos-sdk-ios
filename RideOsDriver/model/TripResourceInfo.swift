@@ -17,9 +17,11 @@ import CoreLocation
 import Foundation
 
 public struct TripResourceInfo: Equatable {
-    let numberOfPassengers: Int
+    public let numberOfPassengers: Int
+    public let nameOfTripRequester: String
 
-    public init(numberOfPassengers: Int) {
+    public init(numberOfPassengers: Int, nameOfTripRequester: String) {
         self.numberOfPassengers = numberOfPassengers
+        self.nameOfTripRequester = nameOfTripRequester
     }
 }

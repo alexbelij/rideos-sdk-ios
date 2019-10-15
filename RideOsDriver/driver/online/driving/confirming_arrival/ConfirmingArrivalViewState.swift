@@ -13,16 +13,11 @@
 // limitations under the License.
 //
 
-import CoreLocation
 import Foundation
-import RideOsApi
 
-extension VehiclePosition {
-    public init(vehicleId: String, positionAndHeading: PositionAndHeading) {
-        self.init(
-            vehicleId: vehicleId,
-            position: positionAndHeading.position.coordinate(),
-            heading: positionAndHeading.heading != nil ? CLLocationDirection(positionAndHeading.heading!.degrees) : 0.0
-        )
-    }
+public enum ConfirmingArrivalViewState: Equatable {
+    case arrivalUnconfirmed
+    case confirmingArrival
+    case confirmedArrival
+    case failedToConfirmArrival
 }

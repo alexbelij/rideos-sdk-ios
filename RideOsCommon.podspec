@@ -1,6 +1,6 @@
 Pod::Spec.new do |s|
   s.name             = 'RideOsCommon'
-  s.version          = '0.1.0'
+  s.version          = '0.2.0'
   s.summary          = 'Common code and assets used across other rideOS Cocoapods'
 
   s.description      = <<-DESC
@@ -22,6 +22,7 @@ Pod::Spec.new do |s|
   s.dependency 'Lock', '~> 2.10'
   s.dependency 'Polyline', '~> 4.2'
   s.dependency 'RxCocoa', '~> 4.4'
+  s.dependency 'RxOptional', '~> 3.6'
   s.dependency 'RxSwift', '~> 4.4'
   s.dependency 'RxSwiftExt', '~> 3.4'
   s.dependency 'SwiftSimplify', '~> 0.2'

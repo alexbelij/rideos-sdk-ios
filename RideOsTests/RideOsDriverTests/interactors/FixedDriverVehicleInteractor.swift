@@ -10,15 +10,18 @@ public class FixedDriverVehicleInteractor: MethodCallRecorder, DriverVehicleInte
     private let vehicleState: RideHailCommonsVehicleState
     private let markVehicleReadyError: Error?
     private let markVehicleNotReadyError: Error?
+    private let finishStepsError: Error?
 
     public init(vehicleStatus: VehicleStatus = .unregistered,
                 vehicleState: RideHailCommonsVehicleState = RideHailCommonsVehicleState(),
                 markVehicleReadyError: Error? = nil,
-                markVehicleNotReadyError: Error? = nil) {
+                markVehicleNotReadyError: Error? = nil,
+                finishStepsError: Error? = nil) {
         self.vehicleStatus = vehicleStatus
         self.vehicleState = vehicleState
         self.markVehicleReadyError = markVehicleReadyError
         self.markVehicleNotReadyError = markVehicleNotReadyError
+        self.finishStepsError = finishStepsError
     }
 
     public func createVehicle(vehicleId _: String,
@@ -48,6 +51,10 @@ public class FixedDriverVehicleInteractor: MethodCallRecorder, DriverVehicleInte
 
     public func finishSteps(vehicleId _: String, taskId _: String, stepIds _: [String]) -> Completable {
         recordMethodCall(#function)
+        if let finishStepsError = finishStepsError {
+            return Completable.error(finishStepsError)
+        }
+        
         return Completable.empty()
     }
     

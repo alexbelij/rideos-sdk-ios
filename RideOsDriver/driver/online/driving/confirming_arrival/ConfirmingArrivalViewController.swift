@@ -19,18 +19,24 @@ import RxSwift
 
 public class ConfirmingArrivalViewController: BackgroundMapViewController {
     private let confirmArrivalListener: () -> Void
-    private let actionDialogView: ActionDialogView
+    private let confirmingArrivalDialogView: ConfirmingArrivalDialogView
     private let confirmingArrivalViewModel: ConfirmingArrivalViewModel
     private let schedulerProvider: SchedulerProvider
     private let disposeBag = DisposeBag()
 
     public convenience init(titleText: String,
-                            destination: CLLocationCoordinate2D,
+                            destinationWaypoint: VehiclePlan.Waypoint,
+                            destinationIcon: DrawableMarkerIcon,
                             confirmArrivalListener: @escaping () -> Void,
                             mapViewController: MapViewController,
                             schedulerProvider: SchedulerProvider = DefaultSchedulerProvider()) {
+        let style = DefaultConfirmingArrivalViewModel.Style(destinationIcon: destinationIcon)
+
         self.init(titleText: titleText,
-                  confirmingArrivalViewModel: DefaultConfirmingArrivalViewModel(destination: destination),
+                  confirmingArrivalViewModel: DefaultConfirmingArrivalViewModel(
+                      destinationWaypoint: destinationWaypoint,
+                      style: style
+                  ),
                   confirmArrivalListener: confirmArrivalListener,
                   mapViewController: mapViewController,
                   schedulerProvider: schedulerProvider)
@@ -45,12 +51,7 @@ public class ConfirmingArrivalViewController: BackgroundMapViewController {
         self.confirmArrivalListener = confirmArrivalListener
         self.schedulerProvider = schedulerProvider
 
-        actionDialogView = ActionDialogView(
-            titleText: titleText,
-            actionButtonTitle: RideOsDriverResourceLoader.instance.getString(
-                "ai.rideos.driver.online.confirm-arrival.button.title"
-            )
-        )
+        confirmingArrivalDialogView = ConfirmingArrivalDialogView(headerText: titleText)
 
         super.init(mapViewController: mapViewController)
     }
@@ -64,19 +65,40 @@ public class ConfirmingArrivalViewController: BackgroundMapViewController {
 
         confirmingArrivalViewModel.arrivalDetailText
             .observeOn(schedulerProvider.mainThread())
-            .subscribe(onNext: { [actionDialogView] in actionDialogView.detailText = $0 })
+            .subscribe(onNext: { [confirmingArrivalDialogView] in confirmingArrivalDialogView.set(addressText: $0) })
             .disposed(by: disposeBag)
 
-        actionDialogView.actionButtonTapEvents
+        confirmingArrivalDialogView.confirmArrivalButtonTapEvents
             .observeOn(schedulerProvider.mainThread())
-            .subscribe(onNext: { [confirmArrivalListener] _ in confirmArrivalListener() })
+            .subscribe(onNext: { [confirmingArrivalViewModel] _ in confirmingArrivalViewModel.confirmArrival() })
+            .disposed(by: disposeBag)
+
+        confirmingArrivalViewModel.confirmingArrivalState
+            .observeOn(schedulerProvider.mainThread())
+            .subscribe(onNext: { [unowned self] currentState in
+                switch currentState {
+                case .arrivalUnconfirmed:
+                    self.confirmingArrivalDialogView.isConfirmArrivalButtonEnabled = true
+                case .confirmingArrival:
+                    self.confirmingArrivalDialogView.isConfirmArrivalButtonEnabled = false
+                case .confirmedArrival:
+                    self.confirmingArrivalDialogView.isConfirmArrivalButtonEnabled = false
+                    self.confirmArrivalListener()
+                case .failedToConfirmArrival:
+                    self.confirmingArrivalDialogView.isConfirmArrivalButtonEnabled = true
+                    self.present(self.confirmArrivalFailedAlertController(),
+                                 animated: true,
+                                 completion: nil)
+                }
+
+            })
             .disposed(by: disposeBag)
     }
 
     public override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
 
-        presentBottomDialogStackView(actionDialogView) { [mapViewController, confirmingArrivalViewModel] in
+        presentBottomDialogStackView(confirmingArrivalDialogView) { [mapViewController, confirmingArrivalViewModel] in
             mapViewController.connect(mapStateProvider: confirmingArrivalViewModel)
         }
     }
@@ -84,6 +106,30 @@ public class ConfirmingArrivalViewController: BackgroundMapViewController {
     public override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
 
-        dismissBottomDialogStackView(actionDialogView)
+        dismissBottomDialogStackView(confirmingArrivalDialogView)
+    }
+}
+
+extension ConfirmingArrivalViewController {
+    private func confirmArrivalFailedAlertController() -> UIAlertController {
+        let alertController = UIAlertController(
+            title: RideOsDriverResourceLoader.instance.getString(
+                "ai.rideos.driver.online.confirm-arrival-failed-alert.title"
+            ),
+            message: RideOsDriverResourceLoader.instance.getString(
+                "ai.rideos.driver.online.confirm-arrival-failed-alert.message"
+            ),
+            preferredStyle: UIAlertController.Style.alert
+        )
+
+        alertController.addAction(
+            UIAlertAction(
+                title: RideOsDriverResourceLoader.instance.getString(
+                    "ai.rideos.driver.online.confirm-arrival-failed-alert.action.ok"
+                ),
+                style: UIAlertAction.Style.default
+            )
+        )
+        return alertController
     }
 }

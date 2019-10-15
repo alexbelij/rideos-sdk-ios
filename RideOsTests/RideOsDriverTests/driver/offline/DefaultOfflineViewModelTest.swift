@@ -55,7 +55,7 @@ class DefaultOfflineViewModelTest: ReactiveTestCase {
         
         viewModelUnderTest.goOnline()
         
-        scheduler.advanceTo(2)
+        scheduler.start()
         
         XCTAssertEqual(stateRecorder.events, [
             next(0, .offline),
@@ -64,17 +64,17 @@ class DefaultOfflineViewModelTest: ReactiveTestCase {
             ])
     }
     
-    func testViewModelReflectsFailingToGoOnlineAfterGoingOnlineFails() {
+    func testViewModelReflectsFailingToGoOnlineAfterGoingOnlineWithRetryFails() {
         setUp(markVehicleReadyError: NSError(domain: "", code: 0, userInfo: nil))
         
         viewModelUnderTest.goOnline()
         
-        scheduler.advanceTo(2)
+        scheduler.start()
         
         XCTAssertEqual(stateRecorder.events, [
             next(0, .offline),
             next(1, .goingOnline),
-            next(2, .failedToGoOnline),
+            next(6, .failedToGoOnline),
             ])
     }
     

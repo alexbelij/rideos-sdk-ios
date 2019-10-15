@@ -67,7 +67,8 @@ public class VehicleUnregisteredCoordinator: Coordinator {
     }
 
     private func showRegistering() {
-        showChild(viewController: VehicleRegistrationViewController(vehicleRegistrationViewModel:
-            DefaultVehicleRegistrationViewModel(registerVehicleListener: vehicleUnregisteredViewModel)))
+        showChild(viewController: VehicleRegistrationViewController(
+            registerVehicleListener: vehicleUnregisteredViewModel
+        ))
     }
 }

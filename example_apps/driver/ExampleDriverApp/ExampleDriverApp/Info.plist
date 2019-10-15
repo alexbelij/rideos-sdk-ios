@@ -2,6 +2,8 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<key>DefaultFleetID</key>
+	<string>ENTER_YOUR_FLEET_ID_HERE</string>
 	<key>GoogleAPIKey</key>
 	<string>ENTER_YOUR_GOOGLE_API_KEY_HERE</string>
 	<key>MGLMapboxAccessToken</key>
@@ -26,10 +28,10 @@
 	<true/>
 	<key>UILaunchStoryboardName</key>
 	<string>LaunchScreen</string>
-    <key>UIBackgroundModes</key>
-    <array>
-        <string>audio</string>
-    </array>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>audio</string>
+	</array>
 	<key>UIRequiredDeviceCapabilities</key>
 	<array>
 		<string>armv7</string>

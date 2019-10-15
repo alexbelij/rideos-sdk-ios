@@ -28,7 +28,7 @@ public class RideOsRouteMapboxDirectionsInteractor: MapboxDirectionsInteractor {
         // swiftlint:enable force_cast
     }
 
-    private static let mapboxMatchingCoordinateLimit = 500
+    private static let coordinateAccuracyMeters = 30.0
 
     private let polylineSimplifier: PolylineSimplifier
     private let directionsInteractor: Directions
@@ -36,7 +36,7 @@ public class RideOsRouteMapboxDirectionsInteractor: MapboxDirectionsInteractor {
     private let schedulerProvider: SchedulerProvider
 
     public init(routeInteractor: RouteInteractor = RideOsRouteInteractor(),
-                polylineSimplifier: PolylineSimplifier = DefaultPolylineSimplifier(),
+                polylineSimplifier: PolylineSimplifier = MapboxPolylineSimplifier(),
                 schedulerProvider: SchedulerProvider = DefaultSchedulerProvider()) {
         directionsInteractor = Directions(accessToken: RideOsRouteMapboxDirectionsInteractor.mapboxApiToken)
         self.routeInteractor = routeInteractor
@@ -55,11 +55,7 @@ public class RideOsRouteMapboxDirectionsInteractor: MapboxDirectionsInteractor {
     }
 
     private func getDirections(along coordinates: [CLLocationCoordinate2D]) -> Single<MapboxDirections.Route> {
-        var simplifiedCoordinates = coordinates
-
-        if coordinates.count >= RideOsRouteMapboxDirectionsInteractor.mapboxMatchingCoordinateLimit {
-            simplifiedCoordinates = polylineSimplifier.simplify(polyline: coordinates)
-        }
+        var simplifiedCoordinates = polylineSimplifier.simplify(polyline: coordinates)
 
         let matchOptions = NavigationMatchOptions(coordinates: simplifiedCoordinates)
         guard let firstWaypoint = matchOptions.waypoints.first,
@@ -72,6 +68,7 @@ public class RideOsRouteMapboxDirectionsInteractor: MapboxDirectionsInteractor {
         matchOptions.waypoints = matchOptions.waypoints.map { waypoint in
             let isSignificantWaypoint = waypoint == firstWaypoint || waypoint == lastWaypoint
             waypoint.separatesLegs = isSignificantWaypoint
+            waypoint.coordinateAccuracy = RideOsRouteMapboxDirectionsInteractor.coordinateAccuracyMeters
 
             return waypoint
         }

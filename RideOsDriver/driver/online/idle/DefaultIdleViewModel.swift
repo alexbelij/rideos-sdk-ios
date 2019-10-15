@@ -21,6 +21,7 @@ public class DefaultIdleViewModel: IdleViewModel {
     private let userStorageReader: UserStorageReader
     private let driverVehicleInteractor: DriverVehicleInteractor
     private let stateMachine: StateMachine<IdleViewState>
+    private let schedulerProvider: SchedulerProvider
     private let logger: Logger
     private let disposeBag: DisposeBag
 
@@ -34,6 +35,7 @@ public class DefaultIdleViewModel: IdleViewModel {
                 logger: Logger = LoggerDependencyRegistry.instance.logger) {
         self.userStorageReader = userStorageReader
         self.driverVehicleInteractor = driverVehicleInteractor
+        self.schedulerProvider = schedulerProvider
         self.logger = logger
 
         stateMachine = StateMachine(schedulerProvider: schedulerProvider, initialState: .online, logger: logger)
@@ -50,6 +52,7 @@ public class DefaultIdleViewModel: IdleViewModel {
             stateMachine.transition { _ in .goingOffline }
 
             driverVehicleInteractor.markVehicleNotReady(vehicleId: userStorageReader.userId)
+                .observeOn(schedulerProvider.io())
                 .asObservable()
                 .logErrorsAndRetry(logger: logger)
                 .subscribe(

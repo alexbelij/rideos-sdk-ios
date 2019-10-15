@@ -9,16 +9,12 @@ class DefaultDrivingModelTest: ReactiveTestCase {
     private static let destination = CLLocationCoordinate2D(latitude: 42, longitude: 42)
 
     private var viewModelUnderTest: DrivingViewModel!
-    private var recordingFinishedDrivingListener: RecordingFinishedDrivingListener!
     private var stateRecorder: TestableObserver<DrivingViewState>!
 
     func setUp(withInitialStep step: DrivingViewState.Step) {
         super.setUp()
-        recordingFinishedDrivingListener = RecordingFinishedDrivingListener()
 
-        let finishedDrivingListener = recordingFinishedDrivingListener.finishedDriving
-        viewModelUnderTest = DefaultDrivingViewModel(finishedDrivingListener: finishedDrivingListener,
-                                                     destination: DefaultDrivingModelTest.destination,
+        viewModelUnderTest = DefaultDrivingViewModel(destination: DefaultDrivingModelTest.destination,
                                                      initialStep: step,
                                                      schedulerProvider: TestSchedulerProvider(scheduler: scheduler),
                                                      logger: ConsoleLogger())
@@ -72,7 +68,7 @@ class DefaultDrivingModelTest: ReactiveTestCase {
     func testViewModelWaitingToConfirmArrivalMaintainsSameStateAfterConfirmingArrival() {
         setUp(withInitialStep: .confirmingArrival)
 
-        scheduler.scheduleAt(0) { self.viewModelUnderTest.confirmArrival() }
+        scheduler.scheduleAt(0) { self.viewModelUnderTest.arrivalConfirmed() }
 
         scheduler.start()
 
@@ -80,21 +76,5 @@ class DefaultDrivingModelTest: ReactiveTestCase {
             next(0, DrivingViewState(drivingStep: .confirmingArrival,
                                      destination: DefaultDrivingModelTest.destination)),
         ])
-    }
-
-    func testViewModelCallsFinishedDrivingListenerAfterConfirmingArrival() {
-        setUp(withInitialStep: .confirmingArrival)
-
-        scheduler.scheduleAt(0) { self.viewModelUnderTest.confirmArrival() }
-
-        scheduler.start()
-
-        XCTAssertEqual(recordingFinishedDrivingListener.methodCalls, ["finishedDriving()"])
-    }
-}
-
-class RecordingFinishedDrivingListener: MethodCallRecorder {
-    func finishedDriving() {
-        recordMethodCall(#function)
     }
 }

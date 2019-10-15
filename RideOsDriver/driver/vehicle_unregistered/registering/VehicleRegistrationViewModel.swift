@@ -17,7 +17,7 @@ import Foundation
 import RxSwift
 
 public protocol VehicleRegistrationViewModel {
-    func setFirstNameText(_ text: String)
+    func setPreferredNameText(_ text: String)
 
     func setPhoneNumberText(_ text: String)
 
@@ -25,9 +25,7 @@ public protocol VehicleRegistrationViewModel {
 
     func setRiderCapacityText(_ text: String)
 
-    func cancel()
-
-    func submit()
+    func submit() -> Completable
 
     func isSubmitActionEnabled() -> Observable<Bool>
 }

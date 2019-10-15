@@ -19,18 +19,15 @@ import RideOsCommon
 import RxSwift
 
 public class DefaultDrivingViewModel: DrivingViewModel {
-    private let finishedDrivingListener: () -> Void
     private let destination: CLLocationCoordinate2D
     private let schedulerProvider: SchedulerProvider
 
     private let stateMachine: StateMachine<DrivingViewState.Step>
 
-    public init(finishedDrivingListener: @escaping () -> Void,
-                destination: CLLocationCoordinate2D,
+    public init(destination: CLLocationCoordinate2D,
                 initialStep: DrivingViewState.Step = .drivePending,
                 schedulerProvider: SchedulerProvider = DefaultSchedulerProvider(),
                 logger: Logger = LoggerDependencyRegistry.instance.logger) {
-        self.finishedDrivingListener = finishedDrivingListener
         self.destination = destination
         self.schedulerProvider = schedulerProvider
 
@@ -54,14 +51,12 @@ public class DefaultDrivingViewModel: DrivingViewModel {
         }
     }
 
-    public func confirmArrival() {
-        stateMachine.transition { [finishedDrivingListener] currentState in
+    public func arrivalConfirmed() {
+        stateMachine.transition { currentState in
             guard case .confirmingArrival = currentState else {
                 throw InvalidStateTransitionError.invalidStateTransition(
                     "\(#function) called during invalid state: \(currentState)")
             }
-
-            finishedDrivingListener()
 
             return currentState
         }

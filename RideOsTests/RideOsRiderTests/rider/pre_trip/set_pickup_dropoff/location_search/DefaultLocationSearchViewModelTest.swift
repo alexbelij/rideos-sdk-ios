@@ -1,8 +1,9 @@
 import CoreLocation
+import Cuckoo
 import Foundation
 import RideOsCommon
-import RideOsTestHelpers
 import RideOsRider
+import RideOsTestHelpers
 import RxSwift
 import RxTest
 import XCTest
@@ -24,14 +25,26 @@ class DefaultLocationSearchViewModelTest: ReactiveTestCase {
     var selectedDropoffRecorder: TestableObserver<String>!
     var isDoneActionEnabledRecorder: TestableObserver<Bool>!
     var listener: RecordingLocationSearchListener!
-    var fixedHistoricalSearchInteractor: FixedHistoricalSearchInteractor!
+    var historicalSearchInteractor: MockHistoricalSearchInteractor!
     
     func setUp(initialPickup: GeocodedLocationModel?,
                initialDropoff: GeocodedLocationModel?,
                historicalSearchResults: [LocationAutocompleteResult] = []) {
         super.setUp()
         listener = RecordingLocationSearchListener()
-        fixedHistoricalSearchInteractor = FixedHistoricalSearchInteractor(searchOptions: historicalSearchResults)
+        
+        historicalSearchInteractor = MockHistoricalSearchInteractor()
+        stub(historicalSearchInteractor) { stub in
+            when(stub.historicalSearchOptions.get).thenReturn(Observable.of(historicalSearchResults))
+        }
+        stub(historicalSearchInteractor) { stub in
+            when(stub.store(searchOption: any())).then {
+                var newResults = historicalSearchResults
+                newResults.append($0)
+                when(stub.historicalSearchOptions.get).thenReturn(Observable.of(historicalSearchResults))
+                return Completable.never()
+            }
+        }
         viewModelUnderTest = DefaultLocationSearchViewModel(
             schedulerProvider: TestSchedulerProvider(scheduler: scheduler),
             listener: listener,
@@ -40,7 +53,7 @@ class DefaultLocationSearchViewModelTest: ReactiveTestCase {
             searchBounds: DefaultLocationSearchViewModelTest.searchBounds,
             locationAutocompleteInteractor: FixedLocationAutocompleteInteractor(),
             deviceLocator: FixedDeviceLocator(deviceLocation: DefaultLocationSearchViewModelTest.deviceLocation),
-            historicalSearchInteractor: fixedHistoricalSearchInteractor,
+            historicalSearchInteractor: historicalSearchInteractor,
             logger: ConsoleLogger()
         )
         
@@ -81,8 +94,8 @@ class DefaultLocationSearchViewModelTest: ReactiveTestCase {
         XCTAssertEqual(listener.pickup, DefaultLocationSearchViewModelTest.expectedGeocodedCurrentLocation)
         XCTAssertNil(listener.dropoff)
         XCTAssertEqual(listener.methodCalls, ["selectPickup(_:)"])
-        XCTAssertEqual(fixedHistoricalSearchInteractor.recordedStoredSearchOptions, [])
-
+        verify(historicalSearchInteractor, times(1)).historicalSearchOptions.get()
+        verifyNoMoreInteractions(historicalSearchInteractor)
     }
     
     func testStateMatchesExpectationBeforeInteractionsWithInitialPickupButNoInitialDropoff() {
@@ -97,7 +110,8 @@ class DefaultLocationSearchViewModelTest: ReactiveTestCase {
         XCTAssertNil(listener.pickup)
         XCTAssertNil(listener.dropoff)
         XCTAssertEqual(listener.methodCalls, [])
-        XCTAssertEqual(fixedHistoricalSearchInteractor.recordedStoredSearchOptions, [])
+        verify(historicalSearchInteractor, times(1)).historicalSearchOptions.get()
+        verifyNoMoreInteractions(historicalSearchInteractor)
     }
     
     func testStateMatchesExpectationBeforeInteractionsWithInitialDropoffButNoInitialPickup() {
@@ -112,7 +126,8 @@ class DefaultLocationSearchViewModelTest: ReactiveTestCase {
         XCTAssertEqual(listener.pickup, DefaultLocationSearchViewModelTest.expectedGeocodedCurrentLocation)
         XCTAssertNil(listener.dropoff)
         XCTAssertEqual(listener.methodCalls, ["selectPickup(_:)"])
-        XCTAssertEqual(fixedHistoricalSearchInteractor.recordedStoredSearchOptions, [])
+        verify(historicalSearchInteractor, times(1)).historicalSearchOptions.get()
+        verifyNoMoreInteractions(historicalSearchInteractor)
     }
     
     func testSetDropoffTextProducesExpectedEvents() {
@@ -137,7 +152,8 @@ class DefaultLocationSearchViewModelTest: ReactiveTestCase {
         XCTAssertEqual(listener.pickup, DefaultLocationSearchViewModelTest.expectedGeocodedCurrentLocation)
         XCTAssertNil(listener.dropoff)
         XCTAssertEqual(listener.methodCalls, ["selectPickup(_:)"])
-        XCTAssertEqual(fixedHistoricalSearchInteractor.recordedStoredSearchOptions, [])
+        verify(historicalSearchInteractor, times(1)).historicalSearchOptions.get()
+        verifyNoMoreInteractions(historicalSearchInteractor)
     }
 
     func testSetDuplicateDropoffTextProducesExpectedEvents() {
@@ -159,7 +175,8 @@ class DefaultLocationSearchViewModelTest: ReactiveTestCase {
         XCTAssertEqual(listener.pickup, DefaultLocationSearchViewModelTest.expectedGeocodedCurrentLocation)
         XCTAssertNil(listener.dropoff)
         XCTAssertEqual(listener.methodCalls, ["selectPickup(_:)"])
-        XCTAssertEqual(fixedHistoricalSearchInteractor.recordedStoredSearchOptions, [])
+        verify(historicalSearchInteractor, times(1)).historicalSearchOptions.get()
+        verifyNoMoreInteractions(historicalSearchInteractor)
     }
 
     
@@ -193,7 +210,8 @@ class DefaultLocationSearchViewModelTest: ReactiveTestCase {
         XCTAssertEqual(listener.pickup, DefaultLocationSearchViewModelTest.expectedGeocodedCurrentLocation)
         XCTAssertNil(listener.dropoff)
         XCTAssertEqual(listener.methodCalls, ["selectPickup(_:)"])
-        XCTAssertEqual(fixedHistoricalSearchInteractor.recordedStoredSearchOptions, [])
+        verify(historicalSearchInteractor, times(1)).historicalSearchOptions.get()
+        verifyNoMoreInteractions(historicalSearchInteractor)
     }
 
     func testSetDropoffTextThenSelectDropoffProducesExpectedEvents() {
@@ -221,7 +239,9 @@ class DefaultLocationSearchViewModelTest: ReactiveTestCase {
         XCTAssertEqual(listener.dropoff, GeocodedLocationModel(displayName: "d",
                                                                location: FixedLocationAutocompleteInteractor.location))
         XCTAssertEqual(listener.methodCalls, ["selectPickup(_:)", "selectDropoff(_:)"])
-        XCTAssertEqual(fixedHistoricalSearchInteractor.recordedStoredSearchOptions, [expectedAutocompleteResult])
+        verify(historicalSearchInteractor, times(1)).historicalSearchOptions.get()
+        verify(historicalSearchInteractor, times(1)).store(searchOption: equal(to: expectedAutocompleteResult))
+        verifyNoMoreInteractions(historicalSearchInteractor)
     }
 
     func testCancelInvokesCancelLocationSearchOnListener() {
@@ -277,7 +297,8 @@ class DefaultLocationSearchViewModelTest: ReactiveTestCase {
         XCTAssertEqual(listener.pickup, DefaultLocationSearchViewModelTest.expectedGeocodedCurrentLocation)
         XCTAssertNil(listener.dropoff)
         XCTAssertEqual(listener.methodCalls, ["selectPickup(_:)", "setPickupOnMap()"])
-        XCTAssertEqual(fixedHistoricalSearchInteractor.recordedStoredSearchOptions, [])
+        verify(historicalSearchInteractor, times(1)).historicalSearchOptions.get()
+        verifyNoMoreInteractions(historicalSearchInteractor)
     }
 
     func testSetDropoffTextWithHistoricalLocationsProducesExpectedLocationOptions() {

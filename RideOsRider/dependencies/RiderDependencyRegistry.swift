@@ -28,7 +28,7 @@ public class RiderDependencyRegistry {
 
     public static func create(riderDependencyFactory: RiderDependencyFactory = DefaultRiderDependencyFactory(),
                               mapsDependencyFactory: MapsDependencyFactory,
-                              logger: Logger = ConsoleLogger()) {
+                              logger: Logger) {
         globalInstance = RiderDependencyRegistry(riderDependencyFactory: riderDependencyFactory,
                                                  mapsDependencyFactory: mapsDependencyFactory,
                                                  logger: logger)

@@ -32,7 +32,8 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
         RiderDependencyRegistry.create(
             riderDependencyFactory: DefaultRiderDependencyFactory(),
-            mapsDependencyFactory: GoogleMapsDependencyFactory(googleApiKey: AppDelegate.googleApiKey)
+            mapsDependencyFactory: GoogleMapsDependencyFactory(googleApiKey: AppDelegate.googleApiKey),
+            logger: ConsoleLogger()
         )
 
         window.rootViewController = RiderViewController(

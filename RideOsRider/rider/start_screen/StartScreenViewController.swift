@@ -72,6 +72,7 @@ extension StartScreenViewController {
         let button = UIButton(type: .custom)
 
         Shadows.enableShadows(onView: button)
+        button.layer.cornerRadius = 4.0
 
         button.setImage(RiderImages.magnifyingGlass(), for: .normal)
         button.contentEdgeInsets = UIEdgeInsets(top: 0, left: 3, bottom: 0, right: 0)

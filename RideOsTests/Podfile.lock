@@ -12,6 +12,7 @@ PODS:
   - BoringSSL/Implementation (10.0.6):
     - BoringSSL/Interface (= 10.0.6)
   - BoringSSL/Interface (10.0.6)
+  - Cuckoo (1.1.1)
   - Eureka (5.0.0)
   - GoogleMaps (3.3.0):
     - GoogleMaps/Maps (= 3.3.0)
@@ -76,19 +77,20 @@ PODS:
     - SnapKit (~> 5.0.0)
   - Polyline (4.2.1)
   - Protobuf (3.9.0)
+  - Pulley (2.7.0)
   - ReachabilitySwift (4.3.1)
-  - RideOsApi (0.1.0):
+  - RideOsApi (0.1.1):
     - "!ProtoCompiler-gRPCPlugin (~> 1.13.0)"
-    - RideOsApi/Messages (= 0.1.0)
-    - RideOsApi/Services (= 0.1.0)
-  - RideOsApi/Messages (0.1.0):
+    - RideOsApi/Messages (= 0.1.1)
+    - RideOsApi/Services (= 0.1.1)
+  - RideOsApi/Messages (0.1.1):
     - "!ProtoCompiler-gRPCPlugin (~> 1.13.0)"
     - Protobuf
-  - RideOsApi/Services (0.1.0):
+  - RideOsApi/Services (0.1.1):
     - "!ProtoCompiler-gRPCPlugin (~> 1.13.0)"
     - gRPC-ProtoRPC
     - RideOsApi/Messages
-  - RideOsCommon (0.1.0):
+  - RideOsCommon (0.2.0):
     - Auth0 (~> 1.15)
     - Eureka (~> 5.0)
     - JWTDecode (~> 2.1)
@@ -98,11 +100,12 @@ PODS:
     - Polyline (~> 4.2)
     - RideOsApi (~> 0.1)
     - RxCocoa (~> 4.4)
+    - RxOptional (~> 3.6)
     - RxReachability (~> 0.1)
     - RxSwift (~> 4.4)
     - RxSwiftExt (~> 3.4)
     - SwiftSimplify (~> 0.2)
-  - RideOsDriver (0.1.0):
+  - RideOsDriver (0.2.0):
     - Eureka (~> 5.0)
     - MapboxNavigation (~> 0.34)
     - Polyline (~> 4.2)
@@ -114,16 +117,18 @@ PODS:
     - RxSwift (~> 4.4)
     - RxSwiftExt (~> 3.4)
     - SideMenu (~> 5.0)
+    - Turf (~> 0.3)
   - RideOsGoogleMaps (0.1.0):
     - GoogleMaps (~> 3.2)
     - GooglePlaces (~> 3.2)
     - RideOsCommon (~> 0.1)
     - RxSwift (~> 4.4)
-  - RideOsHereMaps (0.1.0):
+  - RideOsHereMaps (0.2.0):
     - HEREMaps (~> 3.11)
     - RideOsCommon (~> 0.1)
     - RxSwift (~> 4.4)
-  - RideOsRider (0.1.0):
+  - RideOsRider (0.2.0):
+    - Pulley (~> 2.7)
     - RideOsApi (~> 0.1)
     - RideOsCommon (~> 0.1)
     - RxCocoa (~> 4.4)
@@ -163,6 +168,7 @@ PODS:
   - Turf (0.3.0)
 
 DEPENDENCIES:
+  - Cuckoo (= 1.1.1)
   - RideOsCommon (from `../`)
   - RideOsDriver (from `../`)
   - RideOsGoogleMaps (from `../`)
@@ -178,6 +184,7 @@ SPEC REPOS:
     - "!ProtoCompiler-gRPCPlugin"
     - Auth0
     - BoringSSL
+    - Cuckoo
     - Eureka
     - GoogleMaps
     - GooglePlaces
@@ -201,6 +208,7 @@ SPEC REPOS:
     - NotificationBannerSwift
     - Polyline
     - Protobuf
+    - Pulley
     - ReachabilitySwift
     - RideOsApi
     - RxAtomic
@@ -236,6 +244,7 @@ SPEC CHECKSUMS:
   "!ProtoCompiler-gRPCPlugin": ecc935069530285c08fc5d2df3ab73e466352f4a
   Auth0: dd9125f16147639d8e8c58d338402fb085b4e125
   BoringSSL: e10f92a27043805c01071fe815a5cd98ae8212e7
+  Cuckoo: 6193c50e46403cc9417aa98752671a2a5ae6f3a6
   Eureka: 0f64f477ec8ef6201c6fec143d60ff5c201cf654
   GoogleMaps: cfee83da305b9aaeccf92c24ac79df11c3003492
   GooglePlaces: 1e2a87bd9efee9623ee65d44ecc35ebfecd7b13c
@@ -259,13 +268,14 @@ SPEC CHECKSUMS:
   NotificationBannerSwift: e55dd801b0d78f1a7bacb10d722a935ec95f94a3
   Polyline: 0e9890790292741c8186201a536b6bb6a78d02dd
   Protobuf: 1097ca58584c8d9be81bfbf2c5ff5975648dd87a
+  Pulley: 028ddcc7d2dcbc078d71b61b7eee8e786d72c14a
   ReachabilitySwift: 4032e2f59586e11e3b0ebe15b167abdd587a388b
-  RideOsApi: dd1cb844305f225557e55b28913fc6d416047fc2
-  RideOsCommon: 46b6283a117e677f95be4e19bed8c1c1f30751e3
-  RideOsDriver: 21169a9c0a25e7d519ccb323d22d7b6196c5f680
+  RideOsApi: 1bdc99344dc37ad4bcab309154604af2b6ee56f8
+  RideOsCommon: 3f4405a4dfa6b5cdaac3f7123636ba7b23e93097
+  RideOsDriver: 7e8bdd89748cebec7fb93feb775e15853ba53331
   RideOsGoogleMaps: d38316564e069ca979d849d3d0fa66327993e277
-  RideOsHereMaps: f6d7650de9f40e6505fea880ce1cf120ecc0495b
-  RideOsRider: b5a622e89c18b7e422d49fc68cde4976fa746210
+  RideOsHereMaps: 1de5bd298ccba7b5a73bda267299e57eb6a252fa
+  RideOsRider: 2aef0d01a189fdb5eaa785ec6a9fc885195d19e5
   RxAtomic: d00e97c10db88c6f08540e0bf2752fc5a2404167
   RxCocoa: cbf70265dc65a981d4ac982e513c10cf23df24a0
   RxOptional: 80426a0ddbd092573e4c482d8cc13302078c4d5e
@@ -282,6 +292,6 @@ SPEC CHECKSUMS:
   SwiftSimplify: 374ead1c360c6e236539543d6ce5b3abda011080
   Turf: c6bdf62d6a70c647874f295dd1cf4eefc0c3e9e6
 
-PODFILE CHECKSUM: ffddc742a1753971fe4badcd181326d785f40a66
+PODFILE CHECKSUM: 341a04f7d362157cae824dca8b513348eaf897af
 
 COCOAPODS: 1.7.5

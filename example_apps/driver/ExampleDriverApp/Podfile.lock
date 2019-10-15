@@ -76,14 +76,14 @@ PODS:
   - Polyline (4.2.1)
   - Protobuf (3.9.0)
   - ReachabilitySwift (4.3.1)
-  - RideOsApi (0.1.0):
+  - RideOsApi (0.1.1):
     - "!ProtoCompiler-gRPCPlugin (~> 1.13.0)"
-    - RideOsApi/Messages (= 0.1.0)
-    - RideOsApi/Services (= 0.1.0)
-  - RideOsApi/Messages (0.1.0):
+    - RideOsApi/Messages (= 0.1.1)
+    - RideOsApi/Services (= 0.1.1)
+  - RideOsApi/Messages (0.1.1):
     - "!ProtoCompiler-gRPCPlugin (~> 1.13.0)"
     - Protobuf
-  - RideOsApi/Services (0.1.0):
+  - RideOsApi/Services (0.1.1):
     - "!ProtoCompiler-gRPCPlugin (~> 1.13.0)"
     - gRPC-ProtoRPC
     - RideOsApi/Messages
@@ -222,7 +222,7 @@ SPEC CHECKSUMS:
   Polyline: 0e9890790292741c8186201a536b6bb6a78d02dd
   Protobuf: 1097ca58584c8d9be81bfbf2c5ff5975648dd87a
   ReachabilitySwift: 4032e2f59586e11e3b0ebe15b167abdd587a388b
-  RideOsApi: dd1cb844305f225557e55b28913fc6d416047fc2
+  RideOsApi: 1bdc99344dc37ad4bcab309154604af2b6ee56f8
   RideOsCommon: 46b6283a117e677f95be4e19bed8c1c1f30751e3
   RideOsDriver: 21169a9c0a25e7d519ccb323d22d7b6196c5f680
   RideOsGoogleMaps: d38316564e069ca979d849d3d0fa66327993e277

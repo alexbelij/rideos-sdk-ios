@@ -64,19 +64,30 @@ public class DefaultDriverPlanInteractor: DriverPlanInteractor {
                         throw DriverPlanInteractorError.invalidResponse
                     }
 
-                    waypoints.append(DefaultDriverPlanInteractor.waypoint(from: step,
-                                                                          actionType: .driveToPickup,
-                                                                          passengerCount: pickupRiderStep.riderCount))
+                    waypoints.append(
+                        DefaultDriverPlanInteractor.waypoint(
+                            from: step,
+                            actionType: .driveToPickup,
+                            passengerCount: pickupRiderStep.riderCount,
+                            nameOfTripRequester: pickupRiderStep.riderInfo.contactInfo.name
+                        )
+                    )
                 } else {
                     guard let dropoffRiderStep = nextStep.dropoffRider else {
                         logError("Expected dropoffRider to be non-nil for step: \(nextStep)")
                         throw DriverPlanInteractorError.invalidResponse
                     }
 
-                    waypoints.append(DefaultDriverPlanInteractor.waypoint(from: step,
-                                                                          actionType: .driveToDropoff,
-                                                                          passengerCount: dropoffRiderStep.riderCount,
-                                                                          additionalStepIds: [nextStep.id_p]))
+                    waypoints.append(
+                        DefaultDriverPlanInteractor.waypoint(
+                            from: step,
+                            actionType: .driveToDropoff,
+                            passengerCount: dropoffRiderStep.riderCount,
+                            nameOfTripRequester: dropoffRiderStep.riderInfo.contactInfo.name,
+                            additionalStepIds: [nextStep.id_p]
+                        )
+                    )
+
                     // Skip over the drop-off step, since it has been accounted for as part of processing
                     // the drive to location step. This differs from how we handle the pickup step because, currently,
                     // we represent the action of picking up a rider (VehiclePlayAction.ActionType.loadResource), but
@@ -91,9 +102,14 @@ public class DefaultDriverPlanInteractor: DriverPlanInteractor {
                     throw DriverPlanInteractorError.invalidResponse
                 }
 
-                waypoints.append(DefaultDriverPlanInteractor.waypoint(from: step,
-                                                                      actionType: .loadResource,
-                                                                      passengerCount: pickupRiderStep.riderCount))
+                waypoints.append(
+                    DefaultDriverPlanInteractor.waypoint(
+                        from: step,
+                        actionType: .loadResource,
+                        passengerCount: pickupRiderStep.riderCount,
+                        nameOfTripRequester: pickupRiderStep.riderInfo.contactInfo.name
+                    )
+                )
             case .dropoffRider:
                 guard let dropoffRiderStep = step.dropoffRider else {
                     logError("Expected dropoffRider to be non-nil for step: \(step)")
@@ -102,9 +118,14 @@ public class DefaultDriverPlanInteractor: DriverPlanInteractor {
 
                 // In the event we receive a drop-off rider without a drive-to-location before it, treat it
                 // as a drive to drop-off.
-                waypoints.append(DefaultDriverPlanInteractor.waypoint(from: step,
-                                                                      actionType: .driveToDropoff,
-                                                                      passengerCount: dropoffRiderStep.riderCount))
+                waypoints.append(
+                    DefaultDriverPlanInteractor.waypoint(
+                        from: step,
+                        actionType: .driveToDropoff,
+                        passengerCount: dropoffRiderStep.riderCount,
+                        nameOfTripRequester: dropoffRiderStep.riderInfo.contactInfo.name
+                    )
+                )
             default:
                 logError("Unexpected vehicle action for step: \(step)")
             }
@@ -119,10 +140,14 @@ public class DefaultDriverPlanInteractor: DriverPlanInteractor {
         from step: RideHailCommonsVehicleState_Step,
         actionType: VehiclePlanAction.ActionType,
         passengerCount: UInt32,
+        nameOfTripRequester: String,
         additionalStepIds: [String] = []
     ) -> VehiclePlan.Waypoint {
         let uniqueStepIds = Set<String>([step.id_p] + additionalStepIds)
-        let tripResourceInfo = TripResourceInfo(numberOfPassengers: Int(passengerCount))
+        let tripResourceInfo = TripResourceInfo(
+            numberOfPassengers: Int(passengerCount),
+            nameOfTripRequester: nameOfTripRequester
+        )
 
         return VehiclePlan.Waypoint(taskId: step.tripId,
                                     stepIds: uniqueStepIds,

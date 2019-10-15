@@ -21,15 +21,16 @@ public class DrivingCoordinator: Coordinator {
     private let drivingViewModel: DrivingViewModel
 
     private let vehicleNavigationControllerProvider: () -> UIVehicleNavigationController
-    private let destination: CLLocationCoordinate2D
+    private let destinationWaypoint: VehiclePlan.Waypoint
+    private let destinationIcon: DrawableMarkerIcon
     private let drivePendingTitle: String
     private let confirmArrivalTitle: String
     private let mapViewController: MapViewController
     private let schedulerProvider: SchedulerProvider
     private let disposeBag = DisposeBag()
 
-    private convenience init(finishedDrivingListener: @escaping () -> Void,
-                             destination: CLLocationCoordinate2D,
+    private convenience init(destinationWaypoint: VehiclePlan.Waypoint,
+                             destinationIcon: DrawableMarkerIcon,
                              drivePendingTitle: String,
                              confirmArrivalTitle: String,
                              mapViewController: MapViewController,
@@ -45,7 +46,7 @@ public class DrivingCoordinator: Coordinator {
                 simulatedDeviceLocator = nil
             }
 
-            let viewModel = RideOsRouteMapboxDirectionsViewModel(schedulerProvider: schedulerProvider)
+            let viewModel = DefaultMapboxNavigationViewModel(schedulerProvider: schedulerProvider)
 
             return MapboxNavigationViewController(mapboxNavigationViewModel: viewModel,
                                                   mapViewController: mapViewController,
@@ -54,8 +55,8 @@ public class DrivingCoordinator: Coordinator {
         }
 
         self.init(vehicleNavigationControllerProvider: vehicleNavigationControllerProvider,
-                  finishedDrivingListener: finishedDrivingListener,
-                  destination: destination,
+                  destinationWaypoint: destinationWaypoint,
+                  destinationIcon: destinationIcon,
                   drivePendingTitle: drivePendingTitle,
                   confirmArrivalTitle: confirmArrivalTitle,
                   mapViewController: mapViewController,
@@ -64,21 +65,21 @@ public class DrivingCoordinator: Coordinator {
     }
 
     private init(vehicleNavigationControllerProvider: @escaping () -> UIVehicleNavigationController,
-                 finishedDrivingListener: @escaping () -> Void,
-                 destination: CLLocationCoordinate2D,
+                 destinationWaypoint: VehiclePlan.Waypoint,
+                 destinationIcon: DrawableMarkerIcon,
                  drivePendingTitle: String,
                  confirmArrivalTitle: String,
                  mapViewController: MapViewController,
                  navigationController: UINavigationController,
                  schedulerProvider: SchedulerProvider = DefaultSchedulerProvider()) {
         self.vehicleNavigationControllerProvider = vehicleNavigationControllerProvider
-        self.destination = destination
+        self.destinationWaypoint = destinationWaypoint
+        self.destinationIcon = destinationIcon
         self.drivePendingTitle = drivePendingTitle
         self.confirmArrivalTitle = confirmArrivalTitle
         self.mapViewController = mapViewController
         self.schedulerProvider = schedulerProvider
-        drivingViewModel = DefaultDrivingViewModel(finishedDrivingListener: finishedDrivingListener,
-                                                   destination: destination)
+        drivingViewModel = DefaultDrivingViewModel(destination: destinationWaypoint.action.destination)
 
         super.init(navigationController: navigationController)
     }
@@ -107,7 +108,8 @@ public class DrivingCoordinator: Coordinator {
         let startNavigationListener = { [drivingViewModel] in drivingViewModel.startNavigation() }
 
         showChild(viewController: DrivePendingViewController(titleText: drivePendingTitle,
-                                                             destination: destination,
+                                                             destination: destinationWaypoint.action.destination,
+                                                             destinationIcon: destinationIcon,
                                                              startNavigationListener: startNavigationListener,
                                                              mapViewController: mapViewController))
     }
@@ -116,16 +118,17 @@ public class DrivingCoordinator: Coordinator {
         let controller = vehicleNavigationControllerProvider()
         showChild(viewController: controller)
 
-        controller.navigate(to: destination) { [drivingViewModel] in
+        controller.navigate(to: destinationWaypoint.action.destination) { [drivingViewModel] in
             drivingViewModel.finishedNavigation()
         }
     }
 
     private func showConfirmingArrival() {
-        let confirmArrivalListener = { [drivingViewModel] in drivingViewModel.confirmArrival() }
+        let confirmArrivalListener = { [drivingViewModel] in drivingViewModel.arrivalConfirmed() }
 
         showChild(viewController: ConfirmingArrivalViewController(titleText: confirmArrivalTitle,
-                                                                  destination: destination,
+                                                                  destinationWaypoint: destinationWaypoint,
+                                                                  destinationIcon: destinationIcon,
                                                                   confirmArrivalListener: confirmArrivalListener,
                                                                   mapViewController: mapViewController))
     }
@@ -133,14 +136,13 @@ public class DrivingCoordinator: Coordinator {
 
 extension DrivingCoordinator {
     public static func forPickup(
-        finishedDrivingListener: @escaping () -> Void,
-        destination: CLLocationCoordinate2D,
+        destinationWaypoint: VehiclePlan.Waypoint,
         mapViewController: MapViewController,
         navigationController: UINavigationController
     ) -> DrivingCoordinator {
         return DrivingCoordinator(
-            finishedDrivingListener: finishedDrivingListener,
-            destination: destination,
+            destinationWaypoint: destinationWaypoint,
+            destinationIcon: DrawableMarkerIcons.pickupPin(),
             drivePendingTitle: RideOsDriverResourceLoader.instance.getString(
                 "ai.rideos.driver.online.drive-to-pickup.title"
             ),
@@ -153,14 +155,13 @@ extension DrivingCoordinator {
     }
 
     public static func forDropoff(
-        finishedDrivingListener: @escaping () -> Void,
-        destination: CLLocationCoordinate2D,
+        destinationWaypoint: VehiclePlan.Waypoint,
         mapViewController: MapViewController,
         navigationController: UINavigationController
     ) -> DrivingCoordinator {
         return DrivingCoordinator(
-            finishedDrivingListener: finishedDrivingListener,
-            destination: destination,
+            destinationWaypoint: destinationWaypoint,
+            destinationIcon: DrawableMarkerIcons.dropoffPin(),
             drivePendingTitle: RideOsDriverResourceLoader.instance.getString(
                 "ai.rideos.driver.online.drive-to-dropoff.title"
             ),

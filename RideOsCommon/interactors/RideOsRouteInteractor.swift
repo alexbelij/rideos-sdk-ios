@@ -100,32 +100,4 @@ public class RideOsRouteInteractor: RouteInteractor {
                               travelTime: Double(travelTime.seconds) + Double(travelTime.nanos) / 1.0e9,
                               travelDistanceMeters: path.distance))
     }
-
-    // TODO(chrism): Move this to its own utility class
-    public static func convertRouteResponseToRoute(response: RouteResponse) -> Result<Route, RouteInteractorError> {
-        guard let path = response.path else {
-            return .failure(RouteInteractorError.routeNotFound)
-        }
-
-        guard let polyline = path.polyline else {
-            return .failure(RouteInteractorError.routeNotFound)
-        }
-
-        guard let coordinates = Polyline(encodedPolyline: polyline).coordinates else {
-            return .failure(RouteInteractorError.routeNotFound)
-        }
-
-        guard coordinates.count > 1 else {
-            return .failure(RouteInteractorError.routeNotFound)
-        }
-
-        guard let travelTime = path.travelTime else {
-            return .failure(RouteInteractorError.routeNotFound)
-        }
-
-        return .success(Route(coordinates: coordinates,
-                              polyline: polyline,
-                              travelTime: Double(travelTime.milliseconds) / 1000.0,
-                              travelDistanceMeters: path.distanceMeters))
-    }
 }

@@ -19,4 +19,6 @@ import RxSwift
 
 public protocol ConfirmingArrivalViewModel: MapStateProvider {
     var arrivalDetailText: Observable<String> { get }
+    var confirmingArrivalState: Observable<ConfirmingArrivalViewState> { get }
+    func confirmArrival()
 }

@@ -21,6 +21,6 @@ public protocol DrivingViewModel: class {
     var drivingViewState: Observable<DrivingViewState> { get }
 
     func startNavigation()
-    func confirmArrival()
+    func arrivalConfirmed()
     func finishedNavigation()
 }

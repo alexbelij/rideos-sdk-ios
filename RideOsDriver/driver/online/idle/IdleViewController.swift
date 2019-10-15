@@ -15,12 +15,14 @@
 
 import RideOsCommon
 import RxSwift
+import SideMenu
 
 public class IdleViewController: BackgroundMapViewController {
     private weak var goOfflineListener: GoOfflineListener?
 
     private let mapStateProvider = FollowCurrentLocationMapStateProvider(icon: DrawableMarkerIcons.car())
-    private let idleDialogView = IdleDialogView()
+    private let topDetailView = TopDetailView(frame: .zero)
+    private let sideMenuManager: SideMenuManager
     private let viewModel: IdleViewModel
     private let schedulerProvider: SchedulerProvider
     private let disposeBag = DisposeBag()
@@ -28,12 +30,14 @@ public class IdleViewController: BackgroundMapViewController {
     public init(goOfflineListener: GoOfflineListener,
                 mapViewController: MapViewController,
                 viewModel: IdleViewModel = DefaultIdleViewModel(),
+                sideMenuManager: SideMenuManager = SideMenuManager.default,
                 schedulerProvider: SchedulerProvider = DefaultSchedulerProvider()) {
         self.goOfflineListener = goOfflineListener
+        self.sideMenuManager = sideMenuManager
         self.viewModel = viewModel
         self.schedulerProvider = schedulerProvider
 
-        super.init(mapViewController: mapViewController)
+        super.init(mapViewController: mapViewController, showSettingsButton: false)
     }
 
     required init?(coder _: NSCoder) {
@@ -43,31 +47,48 @@ public class IdleViewController: BackgroundMapViewController {
     public override func viewDidLoad() {
         super.viewDidLoad()
 
-        idleDialogView.set(isAnimatingProgress: false)
+        topDetailView.isDriverStatusSwitchOn = true
 
-        idleDialogView.goOfflineTapEvents
+        view.addSubview(topDetailView)
+        topDetailView.translatesAutoresizingMaskIntoConstraints = false
+        topDetailView.leftAnchor.constraint(equalTo: view.leftAnchor).isActive = true
+        topDetailView.rightAnchor.constraint(equalTo: view.rightAnchor).isActive = true
+        topDetailView.topAnchor.constraint(equalTo: view.topAnchor).isActive = true
+        topDetailView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 66.0).isActive = true
+
+        topDetailView
+            .menuButtonTapEvents
             .observeOn(schedulerProvider.mainThread())
-            .subscribe(onNext: { [viewModel] _ in viewModel.goOffline() })
+            .subscribe(onNext: { [unowned self] in
+                guard let sideMenuNavigationController = self.sideMenuManager.menuLeftNavigationController else {
+                    logError("Side menu manager is missing left navigation controller. Not showing side menu.")
+                    return
+                }
+                self.present(sideMenuNavigationController, animated: true, completion: nil)
+            })
             .disposed(by: disposeBag)
+
+        topDetailView.driverStatusSwitchValueChangedEvents
+            .observeOn(schedulerProvider.mainThread())
+            .subscribe(onNext: { [topDetailView, viewModel] in
+                if !topDetailView.isDriverStatusSwitchOn {
+                    viewModel.goOffline()
+                }
+            }).disposed(by: disposeBag)
 
         viewModel.idleViewState
             .observeOn(schedulerProvider.mainThread())
             .subscribe(onNext: { [unowned self] currentState in
                 switch currentState {
-                case .online:
-                    self.idleDialogView.set(isAnimatingProgress: false)
-                    self.idleDialogView.isGoOfflineButtonEnabled = true
-                case .goingOffline:
-                    self.idleDialogView.set(isAnimatingProgress: true)
-                    self.idleDialogView.isGoOfflineButtonEnabled = false
                 case .offline:
                     self.goOfflineListener?.didGoOffline()
                 case .failedToGoOffline:
-                    self.idleDialogView.set(isAnimatingProgress: false)
-                    self.idleDialogView.isGoOfflineButtonEnabled = true
+                    self.topDetailView.setDriverStatusSwitch(isOn: true, animated: true)
                     self.present(self.goingOfflineFailedAlertController(),
                                  animated: true,
                                  completion: nil)
+                default:
+                    break
                 }
 
             }).disposed(by: disposeBag)
@@ -76,15 +97,7 @@ public class IdleViewController: BackgroundMapViewController {
     public override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
 
-        presentBottomDialogStackView(idleDialogView) { [mapViewController, mapStateProvider] in
-            mapViewController.connect(mapStateProvider: mapStateProvider)
-        }
-    }
-
-    public override func viewWillDisappear(_ animated: Bool) {
-        super.viewWillDisappear(animated)
-
-        dismissBottomDialogStackView(idleDialogView)
+        mapViewController.connect(mapStateProvider: mapStateProvider)
     }
 }
 

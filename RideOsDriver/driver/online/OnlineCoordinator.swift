@@ -69,27 +69,18 @@ public class OnlineCoordinator: Coordinator {
     }
 
     private func showDrivingToPickup(waypoint: VehiclePlan.Waypoint) {
-        let finishedDrivingListener = { [onlineViewModel] in onlineViewModel.complete(waypoint: waypoint) }
-
-        showChild(coordinator: DrivingCoordinator.forPickup(finishedDrivingListener: finishedDrivingListener,
-                                                            destination: waypoint.action.destination,
+        showChild(coordinator: DrivingCoordinator.forPickup(destinationWaypoint: waypoint,
                                                             mapViewController: mapViewController,
                                                             navigationController: navigationController))
     }
 
     private func showWaitingForPassengers(waypoint: VehiclePlan.Waypoint) {
-        let waitingListener = { [onlineViewModel] in onlineViewModel.complete(waypoint: waypoint) }
-
-        showChild(viewController: WaitingForPickupViewController(tripResourceInfo: waypoint.action.tripResourceInfo,
-                                                                 waitingForPickupListener: waitingListener,
+        showChild(viewController: WaitingForPickupViewController(pickupWaypoint: waypoint,
                                                                  mapViewController: mapViewController))
     }
 
     private func showDrivingToDropoff(waypoint: VehiclePlan.Waypoint) {
-        let finishedDrivingListener = { [onlineViewModel] in onlineViewModel.complete(waypoint: waypoint) }
-
-        showChild(coordinator: DrivingCoordinator.forDropoff(finishedDrivingListener: finishedDrivingListener,
-                                                             destination: waypoint.action.destination,
+        showChild(coordinator: DrivingCoordinator.forDropoff(destinationWaypoint: waypoint,
                                                              mapViewController: mapViewController,
                                                              navigationController: navigationController))
     }

@@ -9,17 +9,14 @@ import XCTest
 class DefaultVehicleRegistrationViewModelTest: ReactiveTestCase {
     var viewModelUnderTest: DefaultVehicleRegistrationViewModel!
     var isSubmitActionEnabledRecorder: TestableObserver<Bool>!
-    var recordingRegisterVehicleListener: RecordingRegisterVehicleListener!
     var fixedDriverVehicleInteractor: FixedDriverVehicleInteractor!
 
     override func setUp() {
         super.setUp()
         ResolvedFleet.instance.set(resolvedFleet: FleetInfo.defaultFleetInfo)
-        recordingRegisterVehicleListener = RecordingRegisterVehicleListener()
         fixedDriverVehicleInteractor = FixedDriverVehicleInteractor()
         viewModelUnderTest =
-            DefaultVehicleRegistrationViewModel(registerVehicleListener: recordingRegisterVehicleListener,
-                                                schedulerProvider: TestSchedulerProvider(scheduler: scheduler),
+            DefaultVehicleRegistrationViewModel(schedulerProvider: TestSchedulerProvider(scheduler: scheduler),
                                                 driverVehicleInteractor: fixedDriverVehicleInteractor,
                                                 userStorageReader: UserDefaultsUserStorageReader(
                                                     userDefaults: TemporaryUserDefaults(
@@ -36,16 +33,12 @@ class DefaultVehicleRegistrationViewModelTest: ReactiveTestCase {
         assertNil(viewModelUnderTest, after: { self.viewModelUnderTest = nil })
     }
 
-    func testCancelInvokesCancelVehicleRegistrationOnListener() {
-        viewModelUnderTest.cancel()
-        XCTAssertEqual(recordingRegisterVehicleListener.methodCalls, ["cancelVehicleRegistration()"])
-    }
-
     func testIsSumbitActionEnabledWhenAllFieldsValid() {
-        scheduler.scheduleAt(1) { self.viewModelUnderTest.setFirstNameText("FirstName") }
+        scheduler.scheduleAt(1) { self.viewModelUnderTest.setPreferredNameText("FirstName") }
         scheduler.scheduleAt(2) { self.viewModelUnderTest.setPhoneNumberText("000-000-0000") }
         scheduler.scheduleAt(3) { self.viewModelUnderTest.setLicensePlateText("ABC1234") }
         scheduler.scheduleAt(4) { self.viewModelUnderTest.setRiderCapacityText("4") }
+        
         scheduler.start()
 
         XCTAssertEqual(isSubmitActionEnabledRecorder.events, [
@@ -58,31 +51,28 @@ class DefaultVehicleRegistrationViewModelTest: ReactiveTestCase {
     }
 
     func testSubmitFailsIfFieldsAreInvalid() {
-        viewModelUnderTest.submit()
+        let submitActionRecorder = scheduler.record(viewModelUnderTest.submit())
+        
+        scheduler.start()
 
-        scheduler.advanceTo(2)
-        XCTAssertEqual(recordingRegisterVehicleListener.methodCalls, [])
+        XCTAssertEqual(submitActionRecorder.events, [
+            error(0, InvalidVehicleRegistrationInfoError.invalidInfo("Invalid registration info")),
+            ])
     }
 
     func testSubmitSucceedsIfAllFieldsAreValid() {
-        viewModelUnderTest.setFirstNameText("FirstName")
+        viewModelUnderTest.setPreferredNameText("FirstName")
         viewModelUnderTest.setPhoneNumberText("000-000-0000")
         viewModelUnderTest.setLicensePlateText("ABC1234")
         viewModelUnderTest.setRiderCapacityText("4")
 
-        viewModelUnderTest.submit()
-        scheduler.advanceTo(2)
+        let submitActionRecorder = scheduler.record(viewModelUnderTest.submit())
+        
+        scheduler.start()
+        
         XCTAssertEqual(fixedDriverVehicleInteractor.methodCalls, ["createVehicle(vehicleId:fleetId:vehicleInfo:)"])
-        XCTAssertEqual(recordingRegisterVehicleListener.methodCalls, ["finishVehicleRegistration()"])
-    }
-}
-
-class RecordingRegisterVehicleListener: MethodCallRecorder, RegisterVehicleListener {
-    func cancelVehicleRegistration() {
-        recordMethodCall(#function)
-    }
-
-    func finishVehicleRegistration() {
-        recordMethodCall(#function)
+        XCTAssertEqual(submitActionRecorder.events, [
+            completed(0),
+            ])
     }
 }

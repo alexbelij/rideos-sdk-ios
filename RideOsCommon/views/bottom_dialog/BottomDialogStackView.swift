@@ -46,20 +46,27 @@ open class BottomDialogStackView: UIView {
         RideOsCommonResourceLoader.instance.getColor("ai.rideos.common.dialog.color.header-text")
 
     private let stackView = UIStackView()
+    private let stackedElements: [StackedElement]
 
     public required init?(coder _: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
 
     public init(stackedViews: [UIView]) {
+        stackedElements = stackedViews.map { StackedElement.view(view: $0) }
+
         super.init(frame: .zero)
-        setupStackView(withElements: stackedViews.map { StackedElement.view(view: $0) })
+
+        setupStackView(withElements: stackedElements)
     }
 
     // NOTE: views should be ordered from top to bottom
     public init(stackedElements: [StackedElement]) {
+        self.stackedElements = stackedElements
+
         super.init(frame: .zero)
-        setupStackView(withElements: stackedElements)
+
+        setupStackView(withElements: self.stackedElements)
     }
 
     private func setupStackView(withElements elements: [StackedElement]) {
@@ -88,21 +95,42 @@ open class BottomDialogStackView: UIView {
     }
 
     private static func calculateLayoutMargins(_ elements: [StackedElement]) -> UIEdgeInsets {
+        let isHiddenView: (StackedElement) -> Bool = { element in
+            guard let view = element.view else {
+                return false
+            }
+
+            return view.isHidden
+        }
+
+        let elementsExcludingLeadingAndTrailingHiddenViews = elements
+            .drop(while: isHiddenView)
+            .reversed()
+            .drop(while: isHiddenView)
+            .reversed()
+
         let top: CGFloat
-        if let firstElement = elements.first, let topInset = firstElement.customSpacing {
+        if let firstElement = elementsExcludingLeadingAndTrailingHiddenViews.first,
+            let topInset = firstElement.customSpacing {
             top = topInset
         } else {
             top = 8.0
         }
 
         let bottom: CGFloat
-        if let lastElement = elements.last, let bottomInset = lastElement.customSpacing {
+        if let lastElement = elementsExcludingLeadingAndTrailingHiddenViews.last,
+            let bottomInset = lastElement.customSpacing {
             bottom = bottomInset
         } else {
             bottom = 16.0
         }
 
         return UIEdgeInsets(top: top, left: 0, bottom: bottom, right: 0)
+    }
+
+    open override func layoutSubviews() {
+        super.layoutSubviews()
+        stackView.layoutMargins = BottomDialogStackView.calculateLayoutMargins(stackedElements)
     }
 
     public static func headerLabel(withText text: String) -> UILabel {

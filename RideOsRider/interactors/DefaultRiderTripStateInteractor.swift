@@ -275,6 +275,8 @@ public class DefaultRiderTripStateInteractor: RiderTripStateInteractor {
 
         if assignedVehicleContactInfo.contactURL.isNotEmpty {
             contactUrl = URL(string: assignedVehicleContactInfo.contactURL)
+        } else if assignedVehicleContactInfo.phoneNumber.isNotEmpty {
+            contactUrl = URL(string: "tel://" + assignedVehicleContactInfo.phoneNumber)
         } else {
             contactUrl = nil
         }
@@ -354,11 +356,19 @@ public class DefaultRiderTripStateInteractor: RiderTripStateInteractor {
                 return 0.0
             }
 
+            if route.travelTimeInSeconds.isNaN {
+                return 0.0
+            }
+
             return route.travelTimeInSeconds
         }.reduce(0.0, +)
 
         let planTravelDistanceMeters = assignedVehiclePlanSteps.map { step in
             guard let route = step.driveToLocation.route else {
+                return 0.0
+            }
+
+            if route.distanceInMeters.isNaN {
                 return 0.0
             }
 

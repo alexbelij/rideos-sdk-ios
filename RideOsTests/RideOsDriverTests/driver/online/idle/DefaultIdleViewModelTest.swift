@@ -55,7 +55,7 @@ class DefaultIdleViewModelTest: ReactiveTestCase {
         
         viewModelUnderTest.goOffline()
         
-        scheduler.advanceTo(2)
+        scheduler.start()
         
         XCTAssertEqual(stateRecorder.events, [
             next(0, .online),
@@ -64,17 +64,17 @@ class DefaultIdleViewModelTest: ReactiveTestCase {
             ])
     }
     
-    func testViewModelReflectsFailingToGoOfflineAfterGoOfflineFails() {
+    func testViewModelReflectsFailingToGoOfflineAfterGoOfflineWithRetryFails() {
         setUp(markVehicleNotReadyError: NSError(domain: "", code: 0, userInfo: nil))
         
         viewModelUnderTest.goOffline()
         
-        scheduler.advanceTo(2)
+        scheduler.start()
         
         XCTAssertEqual(stateRecorder.events, [
             next(0, .online),
             next(1, .goingOffline),
-            next(2, .failedToGoOffline),
+            next(6, .failedToGoOffline),
             ])
     }
     

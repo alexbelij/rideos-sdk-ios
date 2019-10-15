@@ -19,18 +19,21 @@ import RxSwift
 
 public class DrivePendingViewController: BackgroundMapViewController {
     private let startNavigationListener: () -> Void
-    private let actionDialogView: ActionDialogView
+    private let drivePendingDialogView: DrivePendingDialogView
     private let drivePendingViewModel: DrivePendingViewModel
     private let schedulerProvider: SchedulerProvider
     private let disposeBag = DisposeBag()
 
     public convenience init(titleText: String,
                             destination: CLLocationCoordinate2D,
+                            destinationIcon: DrawableMarkerIcon,
                             startNavigationListener: @escaping () -> Void,
                             mapViewController: MapViewController,
                             schedulerProvider: SchedulerProvider = DefaultSchedulerProvider()) {
+        let style = DefaultDrivePendingViewModel.Style(destinationIcon: destinationIcon)
+
         self.init(titleText: titleText,
-                  drivePendingViewModel: DefaultDrivePendingViewModel(destination: destination),
+                  drivePendingViewModel: DefaultDrivePendingViewModel(destination: destination, style: style),
                   startNavigationListener: startNavigationListener,
                   mapViewController: mapViewController,
                   schedulerProvider: schedulerProvider)
@@ -45,12 +48,7 @@ public class DrivePendingViewController: BackgroundMapViewController {
         self.startNavigationListener = startNavigationListener
         self.schedulerProvider = schedulerProvider
 
-        actionDialogView = ActionDialogView(
-            titleText: titleText,
-            actionButtonTitle: RideOsDriverResourceLoader.instance.getString(
-                "ai.rideos.driver.online.start-navigation-button.title"
-            )
-        )
+        drivePendingDialogView = DrivePendingDialogView(headerText: titleText)
 
         super.init(mapViewController: mapViewController)
     }
@@ -64,10 +62,12 @@ public class DrivePendingViewController: BackgroundMapViewController {
 
         drivePendingViewModel.routeDetailText
             .observeOn(schedulerProvider.mainThread())
-            .subscribe(onNext: { [actionDialogView] in actionDialogView.detailText = $0 })
+            .subscribe(onNext: {
+                [drivePendingDialogView] in drivePendingDialogView.set(estimatedArrivalTimeAndDistanceText: $0)
+            })
             .disposed(by: disposeBag)
 
-        actionDialogView.actionButtonTapEvents
+        drivePendingDialogView.startNavigationTapEvents
             .observeOn(schedulerProvider.mainThread())
             .subscribe(onNext: { [startNavigationListener] _ in startNavigationListener() })
             .disposed(by: disposeBag)
@@ -76,7 +76,7 @@ public class DrivePendingViewController: BackgroundMapViewController {
     public override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
 
-        presentBottomDialogStackView(actionDialogView) { [mapViewController, drivePendingViewModel] in
+        presentBottomDialogStackView(drivePendingDialogView) { [mapViewController, drivePendingViewModel] in
             mapViewController.connect(mapStateProvider: drivePendingViewModel)
         }
     }
@@ -84,6 +84,6 @@ public class DrivePendingViewController: BackgroundMapViewController {
     public override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
 
-        dismissBottomDialogStackView(actionDialogView)
+        dismissBottomDialogStackView(drivePendingDialogView)
     }
 }

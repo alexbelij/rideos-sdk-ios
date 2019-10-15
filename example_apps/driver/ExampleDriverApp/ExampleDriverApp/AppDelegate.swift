@@ -33,7 +33,8 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
         DriverDependencyRegistry.create(
             driverDependencyFactory: DefaultDriverDependencyFactory(),
-            mapsDependencyFactory: GoogleMapsDependencyFactory(googleApiKey: AppDelegate.googleApiKey)
+            mapsDependencyFactory: GoogleMapsDependencyFactory(googleApiKey: AppDelegate.googleApiKey),
+            logger: ConsoleLogger()
         )
 
         window.rootViewController = DriverViewController(

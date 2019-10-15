@@ -13,33 +13,33 @@
 // limitations under the License.
 //
 
+import CoreLocation
 import RideOsCommon
 import RxSwift
 
 public class WaitingForPickupViewController: BackgroundMapViewController {
-    private let waitingForPickupListener: () -> Void
-    private let actionDialogView: ActionDialogView
+    private let waitingForPickupDialogView: WatingForPickupDialogView
+    private let waitingForPickupViewModel: WaitingForPickupViewModel
     private let schedulerProvider: SchedulerProvider
     private let disposeBag = DisposeBag()
 
-    public init(tripResourceInfo: TripResourceInfo,
-                waitingForPickupListener: @escaping () -> Void,
+    public convenience init(pickupWaypoint: VehiclePlan.Waypoint,
+                            mapViewController: MapViewController,
+                            schedulerProvider: SchedulerProvider = DefaultSchedulerProvider()) {
+        let viewModel = DefaultWaitingForPickupViewModel(pickupWaypoint: pickupWaypoint)
+
+        self.init(viewModel: viewModel,
+                  mapViewController: mapViewController,
+                  schedulerProvider: schedulerProvider)
+    }
+
+    public init(viewModel: WaitingForPickupViewModel,
                 mapViewController: MapViewController,
                 schedulerProvider: SchedulerProvider = DefaultSchedulerProvider()) {
-        self.waitingForPickupListener = waitingForPickupListener
         self.schedulerProvider = schedulerProvider
+        waitingForPickupViewModel = viewModel
 
-        actionDialogView = ActionDialogView(
-            titleText: String(
-                format: RideOsDriverResourceLoader.instance.getString(
-                    "ai.rideos.driver.online.waiting-for-pickup.title-format"
-                ),
-                tripResourceInfo.numberOfPassengers
-            ),
-            actionButtonTitle: RideOsDriverResourceLoader.instance.getString(
-                "ai.rideos.driver.online.waiting-for-pickup.button.title"
-            )
-        )
+        waitingForPickupDialogView = WatingForPickupDialogView(pickupPassengersText: viewModel.passengersToPickupText)
 
         super.init(mapViewController: mapViewController)
     }
@@ -51,21 +51,67 @@ public class WaitingForPickupViewController: BackgroundMapViewController {
     public override func viewDidLoad() {
         super.viewDidLoad()
 
-        actionDialogView.actionButtonTapEvents
+        waitingForPickupDialogView.confirmPickupTapEvents
             .observeOn(schedulerProvider.mainThread())
-            .subscribe(onNext: { [waitingForPickupListener] _ in waitingForPickupListener() })
+            .subscribe(onNext: { [waitingForPickupViewModel] _ in waitingForPickupViewModel.confirmPickup() })
+            .disposed(by: disposeBag)
+
+        waitingForPickupViewModel.confirmingPickupState
+            .observeOn(schedulerProvider.mainThread())
+            .subscribe(onNext: { [unowned self] currentState in
+                switch currentState {
+                case .pickupUnconfirmed:
+                    self.waitingForPickupDialogView.isConfirmPickupButtonEnabled = true
+                case .confirmingPickup:
+                    self.waitingForPickupDialogView.isConfirmPickupButtonEnabled = false
+                case .confirmedPickup:
+                    self.waitingForPickupDialogView.isConfirmPickupButtonEnabled = false
+                case .failedToConfirmPickup:
+                    self.waitingForPickupDialogView.isConfirmPickupButtonEnabled = true
+                    self.present(self.confirmPickupFailedAlertController(),
+                                 animated: true,
+                                 completion: nil)
+                }
+
+            })
             .disposed(by: disposeBag)
     }
 
     public override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
 
-        presentBottomDialogStackView(actionDialogView)
+        presentBottomDialogStackView(waitingForPickupDialogView) { [mapViewController, waitingForPickupViewModel] in
+            mapViewController.connect(mapStateProvider: waitingForPickupViewModel)
+        }
     }
 
     public override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
 
-        dismissBottomDialogStackView(actionDialogView)
+        dismissBottomDialogStackView(waitingForPickupDialogView)
+    }
+}
+
+extension WaitingForPickupViewController {
+    private func confirmPickupFailedAlertController() -> UIAlertController {
+        let alertController = UIAlertController(
+            title: RideOsDriverResourceLoader.instance.getString(
+                "ai.rideos.driver.online.confirm-pickup-failed-alert.title"
+            ),
+            message: RideOsDriverResourceLoader.instance.getString(
+                "ai.rideos.driver.online.confirm-pickup-failed-alert.message"
+            ),
+            preferredStyle: UIAlertController.Style.alert
+        )
+
+        alertController.addAction(
+            UIAlertAction(
+                title: RideOsDriverResourceLoader.instance.getString(
+                    "ai.rideos.driver.online.confirm-pickup-failed-alert.action.ok"
+                ),
+                style: UIAlertAction.Style.default
+            )
+        )
+        return alertController
     }
 }

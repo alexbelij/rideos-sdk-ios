@@ -30,6 +30,7 @@ public class SquareImageButton: UIView {
         activateMaxSizeConstraintsOnSubview(button)
         if enableShadows {
             Shadows.enableShadows(onView: self)
+            layer.cornerRadius = 4.0
         }
         self.backgroundColor = backgroundColor
         button.setImage(image, for: .normal)
