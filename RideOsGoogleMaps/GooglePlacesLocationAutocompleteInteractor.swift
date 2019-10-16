@@ -15,6 +15,7 @@
 
 import CoreLocation
 import Foundation
+import GoogleMaps
 import GooglePlaces
 import RideOsCommon
 import RxSwift

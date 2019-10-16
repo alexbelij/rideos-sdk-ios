@@ -1,4 +1,4 @@
-// MARK: - Mocks generated from file: ../RideOsRider/interactors/HistoricalSearchInteractor.swift at 2019-10-15 22:08:04 +0000
+// MARK: - Mocks generated from file: ../RideOsRider/interactors/HistoricalSearchInteractor.swift at 2019-10-16 18:09:12 +0000
 
 // Copyright 2019 rideOS, Inc.
 //

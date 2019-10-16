@@ -1,6 +1,6 @@
 Pod::Spec.new do |s|
   s.name             = 'RideOsGoogleMaps'
-  s.version          = '0.1.0'
+  s.version          = '0.2.0'
   s.summary          = 'Implementation of rideOS maps protocols that uses Google Maps and Places'
 
   s.description      = <<-DESC

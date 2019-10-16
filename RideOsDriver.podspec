@@ -17,7 +17,6 @@ Pod::Spec.new do |s|
   
   s.dependency 'RideOsApi', '~> 0.1'
   s.dependency 'RideOsCommon', '~> 0.1'
-  s.dependency 'Eureka', '~> 5.0'
   s.dependency 'Polyline', '~> 4.2'
   s.dependency 'Protobuf', '~> 3.9'
   s.dependency 'RxCocoa', '~> 4.4'

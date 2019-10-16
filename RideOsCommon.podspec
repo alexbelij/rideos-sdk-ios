@@ -17,7 +17,7 @@ Pod::Spec.new do |s|
   
   s.dependency 'RideOsApi', '~> 0.1'
   s.dependency 'Auth0', '~> 1.15'
-  s.dependency 'Eureka', '~> 5.0'
+  s.dependency 'Eureka', '~> 5.0.0'
   s.dependency 'JWTDecode', '~> 2.1'
   s.dependency 'Lock', '~> 2.10'
   s.dependency 'Polyline', '~> 4.2'
