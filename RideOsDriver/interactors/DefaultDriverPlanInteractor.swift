@@ -69,7 +69,7 @@ public class DefaultDriverPlanInteractor: DriverPlanInteractor {
                             from: step,
                             actionType: .driveToPickup,
                             passengerCount: pickupRiderStep.riderCount,
-                            nameOfTripRequester: pickupRiderStep.riderInfo.contactInfo.name
+                            contactInfo: pickupRiderStep.riderInfo.contactInfo
                         )
                     )
                 } else {
@@ -83,7 +83,7 @@ public class DefaultDriverPlanInteractor: DriverPlanInteractor {
                             from: step,
                             actionType: .driveToDropoff,
                             passengerCount: dropoffRiderStep.riderCount,
-                            nameOfTripRequester: dropoffRiderStep.riderInfo.contactInfo.name,
+                            contactInfo: dropoffRiderStep.riderInfo.contactInfo,
                             additionalStepIds: [nextStep.id_p]
                         )
                     )
@@ -107,7 +107,7 @@ public class DefaultDriverPlanInteractor: DriverPlanInteractor {
                         from: step,
                         actionType: .loadResource,
                         passengerCount: pickupRiderStep.riderCount,
-                        nameOfTripRequester: pickupRiderStep.riderInfo.contactInfo.name
+                        contactInfo: pickupRiderStep.riderInfo.contactInfo
                     )
                 )
             case .dropoffRider:
@@ -123,7 +123,7 @@ public class DefaultDriverPlanInteractor: DriverPlanInteractor {
                         from: step,
                         actionType: .driveToDropoff,
                         passengerCount: dropoffRiderStep.riderCount,
-                        nameOfTripRequester: dropoffRiderStep.riderInfo.contactInfo.name
+                        contactInfo: dropoffRiderStep.riderInfo.contactInfo
                     )
                 )
             default:
@@ -140,14 +140,18 @@ public class DefaultDriverPlanInteractor: DriverPlanInteractor {
         from step: RideHailCommonsVehicleState_Step,
         actionType: VehiclePlanAction.ActionType,
         passengerCount: UInt32,
-        nameOfTripRequester: String,
+        contactInfo: RideHailCommonsContactInfo,
         additionalStepIds: [String] = []
     ) -> VehiclePlan.Waypoint {
         let uniqueStepIds = Set<String>([step.id_p] + additionalStepIds)
-        let tripResourceInfo = TripResourceInfo(
-            numberOfPassengers: Int(passengerCount),
-            nameOfTripRequester: nameOfTripRequester
+
+        let contactInfo = ContactInfo(
+            name: contactInfo.name,
+            phoneNumber: contactInfo.phoneNumber,
+            contactURL: contactInfo.contactURL
         )
+
+        let tripResourceInfo = TripResourceInfo(numberOfPassengers: Int(passengerCount), contactInfo: contactInfo)
 
         return VehiclePlan.Waypoint(taskId: step.tripId,
                                     stepIds: uniqueStepIds,

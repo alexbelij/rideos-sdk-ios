@@ -16,7 +16,7 @@
 import Foundation
 import RxSwift
 
-public protocol PreTripViewModel: SetPickupDropoffListener, ConfirmLocationListener, ConfirmTripListener, ConfirmSeatsListener {
+public protocol PreTripViewModel: SetPickupDropoffListener, ConfirmTripListener, ConfirmSeatsListener {
     func getPreTripState() -> Observable<PreTripState>
     func cancelTripRequest()
 }

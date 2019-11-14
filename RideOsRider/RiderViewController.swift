@@ -37,16 +37,20 @@ public class RiderViewController: StartupViewController {
     public override func createMainViewController(_: String) -> (AuthenticatedUIViewController) {
         let navigationController = UINavigationController(rootViewController: UIViewController())
         navigationController.isNavigationBarHidden = true
-        let mainViewController = MainViewController(
-            mainNavigationController: navigationController,
-            developerSettingsFormViewControllerFactory: developerSettingsFormViewControllerFactory
-        )
+        let mainViewController = MainViewController(mainNavigationController: navigationController)
         self.mainViewController = mainViewController
         return mainViewController
     }
 
     public func currentCoordinatorEncodedState(_ encoder: JSONEncoder) -> Data? {
         return mainViewController?.applicationCoordinatorEncodedState(encoder)
+    }
+
+    public override func viewDidLoad() {
+        super.viewDidLoad()
+        if #available(iOS 13.0, *) {
+            overrideUserInterfaceStyle = .light
+        }
     }
 }
 
@@ -68,12 +72,10 @@ class MainViewController: UIViewController, AuthenticatedViewController, MainSet
     }
 
     init(mainNavigationController: UINavigationController,
-         developerSettingsFormViewControllerFactory: @escaping DeveloperSettingsFormViewControllerFactory) {
+         menuOptions: [MenuOption] = RiderDependencyRegistry.instance.riderDependencyFactory.menuOptions) {
         self.mainNavigationController = mainNavigationController
         fleetOptionResolver = DefaultFleetOptionResolver()
-        mainSettingsFormViewController = MainSettingsFormViewController(
-            developerSettingsFormViewControllerFactory: developerSettingsFormViewControllerFactory
-        )
+        mainSettingsFormViewController = MainSettingsFormViewController(menuOptions: menuOptions)
         mapViewController = MapViewController()
 
         applicationCoordinator = ApplicationCoordinator(
@@ -83,7 +85,7 @@ class MainViewController: UIViewController, AuthenticatedViewController, MainSet
         super.init(nibName: nil, bundle: nil)
 
         mainSettingsFormViewController.delegate = self
-        let settingsNavigationController = UISideMenuNavigationController(
+        let settingsNavigationController = SideMenuNavigationController(
             rootViewController: mainSettingsFormViewController
         )
         settingsNavigationController.menuWidth = round(view.frame.size.width * settingsMenuWidthScreenPercentage)

@@ -16,5 +16,6 @@
 import Foundation
 
 public protocol CommonDependencyFactory {
+    var userProfileInteractor: UserProfileInteractor { get }
     var fleetInteractor: FleetInteractor { get }
 }

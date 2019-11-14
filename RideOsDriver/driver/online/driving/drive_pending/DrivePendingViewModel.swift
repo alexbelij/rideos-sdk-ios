@@ -18,5 +18,6 @@ import RideOsCommon
 import RxSwift
 
 public protocol DrivePendingViewModel: MapStateProvider {
-    var routeDetailText: Observable<String> { get }
+    var passengersText: String { get }
+    var addressText: Observable<String> { get }
 }

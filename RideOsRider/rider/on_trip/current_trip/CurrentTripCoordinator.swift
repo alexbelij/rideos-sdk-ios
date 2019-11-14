@@ -97,21 +97,24 @@ public class CurrentTripCoordinator: Coordinator {
         childViewController = DrivingToPickupViewController(mapViewController: mapViewController,
                                                             passengerState: passengerState,
                                                             cancelListener: viewModel.cancelTrip,
-                                                            editPickupListener: viewModel.editPickup)
+                                                            editPickupListener: viewModel.editPickup,
+                                                            editDropoffListener: viewModel.editDropoff)
         showChild(viewController: childViewController!)
     }
 
     private func showWaitingForPickup(_ passengerState: RiderTripStateModel) {
         childViewController = WaitingForPickupViewController(mapViewController: mapViewController,
                                                              initialPassengerState: passengerState,
-                                                             cancelListener: viewModel.cancelTrip)
+                                                             cancelListener: viewModel.cancelTrip,
+                                                             editDropoffListener: viewModel.editDropoff)
         showChild(viewController: childViewController!)
     }
 
     private func showDrivingToDropoff(_ passengerState: RiderTripStateModel) {
         childViewController = DrivingToDropoffViewController(mapViewController: mapViewController,
                                                              initialPassengerState: passengerState,
-                                                             cancelListener: viewModel.cancelTrip)
+                                                             cancelListener: viewModel.cancelTrip,
+                                                             editDropoffListener: viewModel.editDropoff)
         showChild(viewController: childViewController!)
     }
 

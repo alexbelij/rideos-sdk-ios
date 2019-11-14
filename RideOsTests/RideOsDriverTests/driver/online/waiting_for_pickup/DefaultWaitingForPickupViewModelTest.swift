@@ -7,27 +7,32 @@ import XCTest
 
 class DefaultWaitingForPickupViewModelTest: ReactiveTestCase {
     private static let pickupLocationCoordinate = CLLocationCoordinate2D(latitude: 42, longitude: 42)
-    private static let tripResourceInfo = TripResourceInfo(numberOfPassengers: 2, nameOfTripRequester: "test_name")
-    private static let action = VehiclePlanAction(destination: pickupLocationCoordinate,
-                                                  actionType: .loadResource,
-                                                  tripResourceInfo: tripResourceInfo)
+    private static let contactInfo = ContactInfo(name: "test_name")
+    private static let tripResourceInfo = TripResourceInfo(numberOfPassengers: 2, contactInfo: contactInfo)
+    private static let action = VehiclePlanAction(
+        destination: pickupLocationCoordinate,
+        actionType: .loadResource,
+        tripResourceInfo: tripResourceInfo
+    )
     private static let pickupWaypoint = VehiclePlan.Waypoint(taskId: "test_task_id",
                                                                   stepIds: [""],
                                                                   action: action)
     private static let deviceLocation = CLLocation(latitude: 1, longitude: 1)
     
-    private static let passengerPickupTextProvider: DefaultWaitingForPickupViewModel.PassengerPickupTextProvider = {
-        "requester_name: \($0.nameOfTripRequester), number_of_passengers: \($0.numberOfPassengers)"
+    private static let passengerTextProvider: TripResourceInfo.PassengerTextProvider = {
+        "requester_name: \($0.contactInfo.name!), number_of_passengers: \($0.numberOfPassengers)"
     }
     
     private static let style = DefaultWaitingForPickupViewModel.Style(
-        passengerPickupTextProvider: passengerPickupTextProvider,
+        passengerTextProvider: passengerTextProvider,
         pickupLocationIcon: DrawableMarkerIcons.pickupPin(),
         vehicleIcon: DrawableMarkerIcons.car()
     )
     
     private var viewModelUnderTest: DefaultWaitingForPickupViewModel!
+    private var echoGeocodeInteractor: EchoGeocodeInteractor!
     private var recordingDriverVehicleInteractor: FixedDriverVehicleInteractor!
+    private var addressTextRecorder: TestableObserver<String>!
     private var mapStateProviderRecorder: MapStateProviderRecorder!
     private var stateRecorder: TestableObserver<ConfirmingPickupViewState>!
     
@@ -35,10 +40,12 @@ class DefaultWaitingForPickupViewModelTest: ReactiveTestCase {
         super.setUp()
         
         recordingDriverVehicleInteractor = FixedDriverVehicleInteractor(finishStepsError: finishStepsError)
+        echoGeocodeInteractor = EchoGeocodeInteractor(scheduler: scheduler)
         
         viewModelUnderTest = DefaultWaitingForPickupViewModel(
             pickupWaypoint: DefaultWaitingForPickupViewModelTest.pickupWaypoint,
             driverVehicleInteractor: recordingDriverVehicleInteractor,
+            geocodeInteractor: echoGeocodeInteractor,
             userStorageReader: UserDefaultsUserStorageReader(
                 userDefaults:TemporaryUserDefaults(stringValues: [CommonUserStorageKeys.userId: "user id"])
             ),
@@ -47,6 +54,8 @@ class DefaultWaitingForPickupViewModelTest: ReactiveTestCase {
             schedulerProvider: TestSchedulerProvider(scheduler: scheduler),
             logger: ConsoleLogger()
         )
+        
+        addressTextRecorder = scheduler.record(viewModelUnderTest.addressText)
         
         mapStateProviderRecorder = MapStateProviderRecorder(mapStateProvider: viewModelUnderTest, scheduler: scheduler)
         stateRecorder = scheduler.record(viewModelUnderTest.confirmingPickupState)
@@ -58,11 +67,22 @@ class DefaultWaitingForPickupViewModelTest: ReactiveTestCase {
         setUp(finishStepsError: nil)
         
         let expectedPassengerPickupText =
-            DefaultWaitingForPickupViewModelTest.passengerPickupTextProvider(
+            DefaultWaitingForPickupViewModelTest.passengerTextProvider(
                 DefaultWaitingForPickupViewModelTest.tripResourceInfo
         )
         
-        XCTAssertEqual(viewModelUnderTest.passengersToPickupText, expectedPassengerPickupText)
+        XCTAssertEqual(viewModelUnderTest.passengersText, expectedPassengerPickupText)
+    }
+    
+    func testViewModelReflectsExpectedAddressText() {
+        setUp(finishStepsError: nil)
+        
+        scheduler.start()
+        
+        XCTAssertEqual(addressTextRecorder.events, [
+            next(1, EchoGeocodeInteractor.displayName),
+            completed(2),
+            ])
     }
     
     func testViewModelReflectsExpectedInitialState() {

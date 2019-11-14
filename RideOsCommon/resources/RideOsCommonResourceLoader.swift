@@ -15,7 +15,7 @@
 
 import Foundation
 
-class RideOsCommonResourceLoader {
-    static let instance = ResourceLoader(frameworkBundle: Bundle(for: RideOsCommonResourceLoader.self),
-                                         bundleName: "RideOsCommon")
+public class RideOsCommonResourceLoader {
+    public static let instance = ResourceLoader(frameworkBundle: Bundle(for: RideOsCommonResourceLoader.self),
+                                                bundleName: "RideOsCommon")
 }

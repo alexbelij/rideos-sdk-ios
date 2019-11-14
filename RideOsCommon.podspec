@@ -1,6 +1,6 @@
 Pod::Spec.new do |s|
   s.name             = 'RideOsCommon'
-  s.version          = '0.2.0'
+  s.version          = '0.3.0'
   s.summary          = 'Common code and assets used across other rideOS Cocoapods'
 
   s.description      = <<-DESC
@@ -10,7 +10,7 @@ Pod::Spec.new do |s|
   s.homepage         = 'https://github.com/rideOS/rideos-sdk-ios'
   s.license          = { :type => 'Apache License, Version 2.0', :file => 'LICENSE' }
   s.author           = { 'rideOS' => 'support@rideos.ai' }
-  s.source           = { :git => 'https://github.com/rideOS/rideos-sdk-ios.git', :tag => '0.2.0' }
+  s.source           = { :git => 'https://github.com/rideOS/rideos-sdk-ios.git', :tag => '0.3.0' }
 
   s.ios.deployment_target = '11.0'
   s.swift_version = '5.0'
@@ -29,6 +29,7 @@ Pod::Spec.new do |s|
   s.dependency 'NicoProgress', '~> 0.1'
   s.dependency 'RxReachability', '~> 0.1'
   s.dependency 'NotificationBannerSwift', '~> 2.1'
+  s.dependency 'SideMenu', '~> 5.0'
   
   s.source_files = 'RideOsCommon/**/*.{swift, h, m}'
   s.resource_bundles = {

@@ -4,7 +4,7 @@ The easiest way to get started with the RideOsRider SDK is to build off of this 
 
 ## Install CocoaPods
 
-We use a `Gemfile` to specify the latest version of CocoaPods that was tested with the project. To install CocoaPods using the `Gemfile`, run the following from within the `example_apps/rider/ExampleRiderApp` directory:
+We use a `Gemfile` to specify the latest version of CocoaPods that was tested with the project: 1.7.5. To install CocoaPods using the `Gemfile`, run the following from within the `example_apps/rider/ExampleRiderApp` directory:
 
 ```
 gem install bundler
@@ -12,6 +12,12 @@ bundle install
 ```
 
 Once it is installed, run `pod install` and then open the generated `ExampleRiderApp.xcworkspace`.
+
+Note that until [this issue](https://github.com/CocoaPods/CocoaPods/issues/9308) is resolved, you'll have to reference the relevant rideOS CocoaPods on GitHub directly. ex:
+```
+pod 'RideOsCommon', :git => 'https://github.com/rideOS/rideos-sdk-ios.git', :tag => '0.3.0'
+```
+See the example app's [Podfile](ExampleRiderApp/Podfile) for a complete example.
 
 ## User authentication
 

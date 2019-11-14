@@ -17,27 +17,33 @@ import CoreLocation
 import Foundation
 import RideOsCommon
 import RxSwift
+import RxSwiftExt
 
 public class DefaultDrivePendingViewModel: DrivePendingViewModel {
-    public typealias RouteDetailTextProvider = (CLLocationDistance, TimeInterval) -> String
+    private static let geocodeRepeatBehavior = RepeatBehavior.immediate(maxCount: 2)
 
     public struct Style {
-        public static let defaultRouteDetailTextProvider: RouteDetailTextProvider = {
-            NSAttributedString.milesAndMinutesLabelWith(meters: $0, timeInterval: $1).string
+        public static let defaultPassengerTextProvider: TripResourceInfo.PassengerTextProvider = { tripResourceInfo in
+            String(
+                format: RideOsDriverResourceLoader.instance.getString(
+                    "ai.rideos.driver.online.drive-to-pickup.passenger-text-format"
+                ),
+                TripResourceInfo.defaultPassengerTextProvider(tripResourceInfo)
+            )
         }
 
-        public let routeDetailTextProvider: RouteDetailTextProvider
+        public let passengerTextProvider: TripResourceInfo.PassengerTextProvider
         public let drawablePathWidth: Float
         public let drawablePathColor: UIColor
         public let destinationIcon: DrawableMarkerIcon
         public let vehicleIcon: DrawableMarkerIcon
 
-        public init(routeDetailTextProvider: @escaping RouteDetailTextProvider = Style.defaultRouteDetailTextProvider,
+        public init(passengerTextProvider: @escaping TripResourceInfo.PassengerTextProvider,
                     drawablePathWidth: Float = 4.0,
                     drawablePathColor: UIColor = .gray,
                     destinationIcon: DrawableMarkerIcon = DrawableMarkerIcons.dropoffPin(),
                     vehicleIcon: DrawableMarkerIcon = DrawableMarkerIcons.car()) {
-            self.routeDetailTextProvider = routeDetailTextProvider
+            self.passengerTextProvider = passengerTextProvider
             self.drawablePathWidth = drawablePathWidth
             self.drawablePathColor = drawablePathColor
             self.destinationIcon = destinationIcon
@@ -45,34 +51,41 @@ public class DefaultDrivePendingViewModel: DrivePendingViewModel {
         }
     }
 
-    private let disposeBag = DisposeBag()
+    public var passengersText: String {
+        return style.passengerTextProvider(tripResourceInfo)
+    }
 
-    private let destination: CLLocationCoordinate2D
+    public var addressText: Observable<String> {
+        return reverseGeocodeObservable().map { $0.displayName }
+    }
+
+    private let tripResourceInfo: TripResourceInfo
+    private let destinationWaypoint: VehiclePlan.Waypoint
     private let style: Style
     private let deviceLocator: DeviceLocator
+    private let geocodeInteractor: GeocodeInteractor
     private let routeInteractor: RouteInteractor
     private let schedulerProvider: SchedulerProvider
+    private let logger: Logger
+    private let disposeBag = DisposeBag()
 
-    public init(destination: CLLocationCoordinate2D,
-                style: Style = Style(),
+    public init(destinationWaypoint: VehiclePlan.Waypoint,
+                style: Style,
                 deviceLocator: DeviceLocator = PotentiallySimulatedDeviceLocator(),
                 routeInteractor: RouteInteractor = RideOsRouteInteractor(),
-                schedulerProvider: SchedulerProvider = DefaultSchedulerProvider()) {
-        self.destination = destination
+                geocodeInteractor: GeocodeInteractor =
+                    DriverDependencyRegistry.instance.mapsDependencyFactory.geocodeInteractor,
+                schedulerProvider: SchedulerProvider = DefaultSchedulerProvider(),
+                logger: Logger = LoggerDependencyRegistry.instance.logger) {
+        self.destinationWaypoint = destinationWaypoint
         self.style = style
         self.deviceLocator = deviceLocator
         self.routeInteractor = routeInteractor
+        self.geocodeInteractor = geocodeInteractor
         self.schedulerProvider = schedulerProvider
-    }
+        self.logger = logger
 
-    public var routeDetailText: Observable<String> {
-        return routeFromCurrentLocationToDestination()
-            .observeOn(schedulerProvider.computation())
-            .map { [unowned self] in self.detailTextForRouteInfo($0) }
-    }
-
-    private func detailTextForRouteInfo(_ routeInfo: RouteInfoModel) -> String {
-        return style.routeDetailTextProvider(routeInfo.travelDistanceInMeters, routeInfo.travelTimeInSeconds)
+        tripResourceInfo = destinationWaypoint.action.tripResourceInfo
     }
 
     private func routeFromCurrentLocationToDestination() -> Observable<RouteInfoModel> {
@@ -80,8 +93,8 @@ public class DefaultDrivePendingViewModel: DrivePendingViewModel {
             .observeCurrentLocation()
             .observeOn(schedulerProvider.io())
             .take(1)
-            .flatMap { [routeInteractor, destination] in
-                routeInteractor.getRoute(origin: $0.coordinate, destination: destination)
+            .flatMap { [routeInteractor, destinationWaypoint] in
+                routeInteractor.getRoute(origin: $0.coordinate, destination: destinationWaypoint.action.destination)
             }
             .observeOn(schedulerProvider.computation())
             .map {
@@ -89,6 +102,16 @@ public class DefaultDrivePendingViewModel: DrivePendingViewModel {
                                travelTimeInSeconds: $0.travelTime,
                                travelDistanceInMeters: $0.travelDistanceMeters)
             }
+            .share(replay: 1)
+    }
+
+    private func reverseGeocodeObservable() -> Observable<GeocodedLocationModel> {
+        return geocodeInteractor.reverseGeocode(location: destinationWaypoint.action.destination, maxResults: 1)
+            .observeOn(schedulerProvider.computation())
+            .logErrors(logger: logger)
+            .retry(DefaultDrivePendingViewModel.geocodeRepeatBehavior)
+            .map { $0.first }
+            .filterNil()
             .share(replay: 1)
     }
 }

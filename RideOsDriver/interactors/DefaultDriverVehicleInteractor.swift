@@ -17,6 +17,7 @@ import CoreLocation
 import Foundation
 import grpc
 import RideOsApi
+import RideOsCommon
 import RxSwift
 
 public class DefaultDriverVehicleInteractor: DriverVehicleInteractor {
@@ -52,6 +53,62 @@ public class DefaultDriverVehicleInteractor: DriverVehicleInteractor {
 
             let call = driverVehicleService.rpcToCompleteStep(with: completeStepRequest) { response, error in
 
+                guard error == nil else {
+                    completable(.error(error!))
+                    return
+                }
+
+                guard response != nil else {
+                    completable(.error(DriverVehicleInteractorError.invalidResponse))
+                    return
+                }
+
+                completable(.completed)
+            }
+
+            call.start()
+
+            return Disposables.create {
+                call.cancel()
+            }
+        }
+    }
+
+    public func rejectTrip(vehicleId: String, tripId: String) -> Completable {
+        return Completable.create { [driverVehicleService] completable in
+            let rejectTripRequest = RideHailDriverRejectTripRequest()
+            rejectTripRequest.vehicleId = vehicleId
+            rejectTripRequest.tripId = tripId
+
+            let call = driverVehicleService.rpcToRejectTrip(with: rejectTripRequest) { response, error in
+
+                guard error == nil else {
+                    completable(.error(error!))
+                    return
+                }
+
+                guard response != nil else {
+                    completable(.error(DriverVehicleInteractorError.invalidResponse))
+                    return
+                }
+
+                completable(.completed)
+            }
+
+            call.start()
+
+            return Disposables.create {
+                call.cancel()
+            }
+        }
+    }
+
+    public func cancelTrip(tripId: String) -> Completable {
+        return Completable.create { [driverVehicleService] completable in
+            let cancelTripRequest = RideHailDriverCancelTripRequest()
+            cancelTripRequest.id_p = tripId
+
+            let call = driverVehicleService.rpcToCancelTrip(with: cancelTripRequest) { response, error in
                 guard error == nil else {
                     completable(.error(error!))
                     return
@@ -237,6 +294,93 @@ public class DefaultDriverVehicleInteractor: DriverVehicleInteractor {
                 }
 
                 return completable(.completed)
+            }
+
+            call.start()
+
+            return Disposables.create {
+                call.cancel()
+            }
+        }
+    }
+
+    public func updateContactInfo(vehicleId: String, contactInfo: ContactInfo) -> Completable {
+        let request = RideHailDriverUpdateVehicleRequest()
+        request.id_p = vehicleId
+        request.updatedVehicleInfo = RideHailCommonsVehicleInfoUpdate()
+        request.updatedVehicleInfo.driverInfo = RideHailCommonsDriverInfo()
+        request.updatedVehicleInfo.driverInfo.contactInfo = RideHailCommonsContactInfo()
+        request.updatedVehicleInfo.driverInfo.contactInfo.name = contactInfo.name
+        request.updatedVehicleInfo.driverInfo.contactInfo.phoneNumber = contactInfo.phoneNumber
+        request.updatedVehicleInfo.driverInfo.contactInfo.contactURL = contactInfo.url?.absoluteString
+
+        return Completable.create { [driverVehicleService] completable in
+            let call = driverVehicleService.rpcToUpdateVehicle(with: request) { _, error in
+                guard error == nil else {
+                    completable(.error(error!))
+                    return
+                }
+
+                return completable(.completed)
+            }
+
+            call.start()
+
+            return Disposables.create {
+                call.cancel()
+            }
+        }
+    }
+
+    public func updateLicensePlate(vehicleId: String, licensePlate: String) -> Completable {
+        let request = RideHailDriverUpdateVehicleRequest()
+        request.id_p = vehicleId
+        request.updatedVehicleInfo = RideHailCommonsVehicleInfoUpdate()
+        request.updatedVehicleInfo.licensePlate = GPBStringValue()
+        request.updatedVehicleInfo.licensePlate.value = licensePlate
+
+        return Completable.create { [driverVehicleService] completable in
+            let call = driverVehicleService.rpcToUpdateVehicle(with: request) { _, error in
+                guard error == nil else {
+                    completable(.error(error!))
+                    return
+                }
+
+                return completable(.completed)
+            }
+
+            call.start()
+
+            return Disposables.create {
+                call.cancel()
+            }
+        }
+    }
+
+    public func getVehicleInfo(vehicleId: String) -> Single<VehicleInfo> {
+        let request = RideHailDriverGetVehicleInfoRequest()
+        request.id_p = vehicleId
+
+        return Single.create { [driverVehicleService] single in
+            let call = driverVehicleService.rpcToGetVehicleInfo(with: request) { response, error in
+                guard error == nil else {
+                    single(.error(error!))
+                    return
+                }
+
+                guard let response = response,
+                    let responseInfo = response.info else {
+                    single(.error(DriverVehicleInteractorError.invalidResponse))
+                    return
+                }
+
+                let contactInfo = ContactInfo(
+                    name: responseInfo.driverInfo.contactInfo.name,
+                    phoneNumber: responseInfo.driverInfo.contactInfo.phoneNumber,
+                    contactURL: responseInfo.driverInfo.contactInfo.contactURL
+                )
+
+                return single(.success(VehicleInfo(licensePlate: responseInfo.licensePlate, contactInfo: contactInfo)))
             }
 
             call.start()

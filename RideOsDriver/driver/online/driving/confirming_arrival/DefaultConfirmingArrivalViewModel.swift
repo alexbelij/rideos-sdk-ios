@@ -24,17 +24,24 @@ public class DefaultConfirmingArrivalViewModel: ConfirmingArrivalViewModel {
     private static let geocodeRepeatBehavior = RepeatBehavior.immediate(maxCount: 2)
 
     public struct Style {
+        public let passengerTextProvider: TripResourceInfo.PassengerTextProvider
         public let destinationIcon: DrawableMarkerIcon
         public let vehicleIcon: DrawableMarkerIcon
 
-        public init(destinationIcon: DrawableMarkerIcon = DrawableMarkerIcons.dropoffPin(),
+        public init(passengerTextProvider: @escaping TripResourceInfo.PassengerTextProvider,
+                    destinationIcon: DrawableMarkerIcon = DrawableMarkerIcons.dropoffPin(),
                     vehicleIcon: DrawableMarkerIcon = DrawableMarkerIcons.car()) {
+            self.passengerTextProvider = passengerTextProvider
             self.destinationIcon = destinationIcon
             self.vehicleIcon = vehicleIcon
         }
     }
 
-    public var arrivalDetailText: Observable<String> {
+    public var passengersText: String {
+        return style.passengerTextProvider(tripResourceInfo)
+    }
+
+    public var addressText: Observable<String> {
         return reverseGeocodeObservable().map { $0.displayName }
     }
 
@@ -42,6 +49,7 @@ public class DefaultConfirmingArrivalViewModel: ConfirmingArrivalViewModel {
         return stateMachine.observeCurrentState()
     }
 
+    private let tripResourceInfo: TripResourceInfo
     private let destinationWaypoint: VehiclePlan.Waypoint
     private let driverVehicleInteractor: DriverVehicleInteractor
     private let geocodeInteractor: GeocodeInteractor
@@ -59,7 +67,7 @@ public class DefaultConfirmingArrivalViewModel: ConfirmingArrivalViewModel {
                 geocodeInteractor: GeocodeInteractor =
                     DriverDependencyRegistry.instance.mapsDependencyFactory.geocodeInteractor,
                 userStorageReader: UserStorageReader = UserDefaultsUserStorageReader(),
-                style: Style = Style(),
+                style: Style,
                 schedulerProvider: SchedulerProvider = DefaultSchedulerProvider(),
                 logger: Logger = LoggerDependencyRegistry.instance.logger) {
         self.destinationWaypoint = destinationWaypoint
@@ -70,6 +78,8 @@ public class DefaultConfirmingArrivalViewModel: ConfirmingArrivalViewModel {
         self.style = style
         self.schedulerProvider = schedulerProvider
         self.logger = logger
+
+        tripResourceInfo = destinationWaypoint.action.tripResourceInfo
 
         stateMachine = StateMachine(schedulerProvider: schedulerProvider,
                                     initialState: .arrivalUnconfirmed,

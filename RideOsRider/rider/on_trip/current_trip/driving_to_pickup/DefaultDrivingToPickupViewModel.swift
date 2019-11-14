@@ -47,7 +47,9 @@ public class DefaultDrivingToPickupViewModel: DefaultMatchedToVehicleViewModel {
                 status: DefaultDrivingToPickupViewModel.statusStringFor(travelTime: route.travelTime,
                                                                         waypointCount: waypoints.count),
                 nextWaypoint: pickup.displayName,
-                vehicleInfo: vehicleInfo
+                vehicleInfo: vehicleInfo,
+                pickupLabel: pickup.displayName,
+                dropoffLabel: dropoff.displayName
             )
         )
     }

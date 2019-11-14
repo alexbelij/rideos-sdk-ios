@@ -24,7 +24,6 @@ public class OnTripCoordinator: Coordinator {
     private let viewModel: OnTripViewModel
     private let tripId: String
     private let mapViewController: MapViewController
-    private let deviceLocator: DeviceLocator
     private let schedulerProvider: SchedulerProvider
 
     public convenience init(tripId: String,
@@ -35,7 +34,6 @@ public class OnTripCoordinator: Coordinator {
                   tripId: tripId,
                   mapViewController: mapViewController,
                   navigationController: navigationController,
-                  deviceLocator: CoreLocationDeviceLocator(),
                   schedulerProvider: DefaultSchedulerProvider())
     }
 
@@ -43,12 +41,10 @@ public class OnTripCoordinator: Coordinator {
                 tripId: String,
                 mapViewController: MapViewController,
                 navigationController: UINavigationController,
-                deviceLocator: DeviceLocator = CoreLocationDeviceLocator(),
                 schedulerProvider: SchedulerProvider = DefaultSchedulerProvider()) {
         self.viewModel = viewModel
         self.tripId = tripId
         self.mapViewController = mapViewController
-        self.deviceLocator = deviceLocator
         self.schedulerProvider = schedulerProvider
         super.init(navigationController: navigationController)
     }
@@ -60,10 +56,16 @@ public class OnTripCoordinator: Coordinator {
                 switch displayState {
                 case .currentTrip:
                     self.showCurrentTrip()
-                case .editingPickup:
-                    self.showEditingPickup()
+                case let .editingPickup(existingPickupLocation, existingDropoffLocation):
+                    self.showEditingPickup(existingPickupLocation: existingPickupLocation,
+                                           existingDropoffLocation: existingDropoffLocation)
+                case let .editingDropoff(existingPickupLocation, existingDropoffLocation):
+                    self.showEditingDropoff(existingPickupLocation: existingPickupLocation,
+                                            existingDropoffLocation: existingDropoffLocation)
                 case .updatingPickup:
                     self.showUpdatingPickup()
+                case .updatingDropoff:
+                    self.showUpdatingDropoff()
                 }
             })
             .disposed(by: disposeBag)
@@ -77,15 +79,45 @@ public class OnTripCoordinator: Coordinator {
                                                       navigationController: navigationController))
     }
 
-    private func showEditingPickup() {
-        showChild(viewController: ConfirmLocationViewController.buildForEditPickup(
+    private func showEditingPickup(existingPickupLocation: DesiredAndAssignedLocation,
+                                   existingDropoffLocation: DesiredAndAssignedLocation) {
+        showChild(coordinator: SetPickupDropoffCoordinator(
+            listener: viewModel,
             mapViewController: mapViewController,
-            initialLocation: deviceLocator.observeCurrentLocation().map { $0.coordinate }.take(1).asSingle(),
-            listener: viewModel
+            navigationController: navigationController,
+            initialPickup: PreTripLocation(desiredAndAssignedLocation: existingPickupLocation, wasConfirmed: true),
+            initialDropoff: PreTripLocation(desiredAndAssignedLocation: existingDropoffLocation, wasConfirmed: true),
+            initialFocus: .pickup,
+            enablePickupSearch: true,
+            enableDropoffSearch: false
+        ))
+    }
+
+    private func showEditingDropoff(existingPickupLocation: DesiredAndAssignedLocation,
+                                    existingDropoffLocation: DesiredAndAssignedLocation) {
+        showChild(coordinator: SetPickupDropoffCoordinator(
+            listener: viewModel,
+            mapViewController: mapViewController,
+            navigationController: navigationController,
+            initialPickup: PreTripLocation(desiredAndAssignedLocation: existingPickupLocation, wasConfirmed: true),
+            initialDropoff: PreTripLocation(desiredAndAssignedLocation: existingDropoffLocation, wasConfirmed: true),
+            initialFocus: .dropoff,
+            enablePickupSearch: false,
+            enableDropoffSearch: true
         ))
     }
 
     private func showUpdatingPickup() {
-        showChild(viewController: UpdatingPickupViewController(mapViewController: mapViewController))
+        showChild(viewController: ProgressIndicatorViewController(
+            mapViewController: mapViewController,
+            headerText: RideOsRiderResourceLoader.instance.getString("ai.rideos.rider.on-trip.updating-pickup.header")
+        ))
+    }
+
+    private func showUpdatingDropoff() {
+        showChild(viewController: ProgressIndicatorViewController(
+            mapViewController: mapViewController,
+            headerText: RideOsRiderResourceLoader.instance.getString("ai.rideos.rider.on-trip.updating-dropoff.header")
+        ))
     }
 }

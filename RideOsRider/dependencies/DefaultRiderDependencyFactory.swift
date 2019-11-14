@@ -17,10 +17,8 @@ import Foundation
 import RideOsCommon
 
 open class DefaultRiderDependencyFactory: RiderDependencyFactory {
-    private let pushNotificationManagerInstance: PushNofificationManager?
-
-    public init(pushNotificationManager: PushNofificationManager? = nil) {
-        pushNotificationManagerInstance = pushNotificationManager
+    open var userProfileInteractor: UserProfileInteractor {
+        return RiderUserProfileInteractor()
     }
 
     open var routeInteractor: RouteInteractor {
@@ -37,5 +35,36 @@ open class DefaultRiderDependencyFactory: RiderDependencyFactory {
 
     open var pushNotificationManager: PushNofificationManager? {
         return pushNotificationManagerInstance
+    }
+
+    open var menuOptions: [MenuOption] {
+        return [
+            MenuOption(
+                title: RideOsCommonResourceLoader.instance.getString(
+                    "ai.rideos.common.settings.developer.edit-profile"
+                ),
+                icon: CommonImages.person(),
+                viewControllerFactory: {
+                    AccountSettingsFormViewController()
+                }
+            ),
+            MenuOption(
+                title: RideOsCommonResourceLoader.instance.getString("ai.rideos.common.settings.developer"),
+                icon: CommonImages.gear(),
+                viewControllerFactory: {
+                    CommonDeveloperSettingsFormViewController(
+                        fleetSelectionViewModel: DefaultFleetSelectionViewModel(),
+                        userStorageReader: UserDefaultsUserStorageReader(),
+                        userStorageWriter: UserDefaultsUserStorageWriter()
+                    )
+                }
+            ),
+        ]
+    }
+
+    private let pushNotificationManagerInstance: PushNofificationManager?
+
+    public init(pushNotificationManager: PushNofificationManager? = nil) {
+        pushNotificationManagerInstance = pushNotificationManager
     }
 }

@@ -73,7 +73,9 @@ class DefaultWaitingForPickupViewModelTest: ReactiveTestCase {
         XCTAssertEqual(dialogModelRecorder.events, [
             .next(0, MatchedToVehicleStatusModel(status: expectedStatus,
                                                  nextWaypoint: pickup.displayName,
-                                                 vehicleInfo: vehicleInfo)
+                                                 vehicleInfo: vehicleInfo,
+                                                 pickupLabel: pickup.displayName,
+                                                 dropoffLabel: dropoff.displayName)
             )
         ])
     }
@@ -128,11 +130,15 @@ class DefaultWaitingForPickupViewModelTest: ReactiveTestCase {
         XCTAssertEqual(dialogModelRecorder.events, [
             .next(0, MatchedToVehicleStatusModel(status: expectedStatus,
                                                  nextWaypoint: pickup.displayName,
-                                                 vehicleInfo: vehicleInfo)
+                                                 vehicleInfo: vehicleInfo,
+                                                 pickupLabel: pickup.displayName,
+                                                 dropoffLabel: dropoff.displayName)
             ),
             .next(1, MatchedToVehicleStatusModel(status: expectedStatus,
                                                  nextWaypoint: pickup1.displayName,
-                                                 vehicleInfo: vehicleInfo1)
+                                                 vehicleInfo: vehicleInfo1,
+                                                 pickupLabel: pickup1.displayName,
+                                                 dropoffLabel: dropoff1.displayName)
             )
         ])
     }

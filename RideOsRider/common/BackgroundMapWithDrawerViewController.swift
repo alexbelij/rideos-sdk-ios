@@ -14,69 +14,88 @@
 //
 
 import Foundation
-import Pulley
+import OverlayContainer
 import RideOsCommon
 
 public class BackgroundMapWithDrawerViewController: UIViewController {
     public let backgroundMapViewController: BackgroundMapViewController
 
-    private let drawerViewController: UIViewController
+    public let drawerViewController: DrawerViewController
+
+    private let containerViewController: OverlayContainerViewController
+
+    public var collapsedDrawerHeight: CGFloat = 0.0 {
+        didSet {
+            containerViewController.invalidateNotchHeights()
+        }
+    }
+
+    public var expandedDrawerHeight: CGFloat = 0.0 {
+        didSet {
+            containerViewController.invalidateNotchHeights()
+        }
+    }
 
     public required init?(coder _: NSCoder) {
-        fatalError("#(function) is unimplemented")
+        fatalError("\(#function) is unimplemented")
     }
 
     public init(backgroundMapViewController: BackgroundMapViewController, drawerContentView: UIView) {
         self.backgroundMapViewController = backgroundMapViewController
-        drawerViewController = BackgroundMapWithDrawerViewController.drawerViewController(withView: drawerContentView)
+        drawerViewController = DrawerViewController(contentView: drawerContentView)
+        containerViewController = OverlayContainerViewController(style: .rigid)
 
         super.init(nibName: nil, bundle: nil)
 
-        let pulleyViewController = BackgroundMapWithDrawerViewController.pulleyViewController(
-            withContentViewController: self.backgroundMapViewController,
-            drawerViewController: drawerViewController
-        )
-        pulleyViewController.delegate = self
-        addChild(pulleyViewController)
-        view.addSubview(pulleyViewController.view)
-        pulleyViewController.didMove(toParent: self)
+        containerViewController.delegate = self
+        containerViewController.viewControllers = [self.backgroundMapViewController, drawerViewController]
+        addChild(containerViewController)
+        view.addSubview(containerViewController.view)
+        view.activateMaxSizeConstraintsOnSubview(containerViewController.view)
+        containerViewController.didMove(toParent: self)
     }
 }
 
-extension BackgroundMapWithDrawerViewController {
-    private static func drawerViewController(withView view: UIView) -> UIViewController {
-        let vc = UIViewController()
-        vc.view.addSubview(view)
-        view.translatesAutoresizingMaskIntoConstraints = false
-        view.topAnchor.constraint(equalTo: vc.view.topAnchor).isActive = true
-        view.leftAnchor.constraint(equalTo: vc.view.leftAnchor).isActive = true
-        view.rightAnchor.constraint(equalTo: vc.view.rightAnchor).isActive = true
-        return vc
+extension BackgroundMapWithDrawerViewController: OverlayContainerViewControllerDelegate {
+    enum OverlayNotch: Int, CaseIterable {
+        case collapsed, expanded
     }
 
-    private static func pulleyViewController(withContentViewController contentViewController: UIViewController,
-                                             drawerViewController: UIViewController) -> PulleyViewController {
-        let pulleyViewController = PulleyViewController(contentViewController: contentViewController,
-                                                        drawerViewController: drawerViewController)
-        pulleyViewController.initialDrawerPosition = .partiallyRevealed
-        let backgroundVisualEffectView = UIVisualEffectView()
-        backgroundVisualEffectView.backgroundColor = .white
-        pulleyViewController.drawerBackgroundVisualEffectView = backgroundVisualEffectView
-        pulleyViewController.drawerCornerRadius = 0
-        pulleyViewController.allowsUserDrawerPositionChange = false
-        return pulleyViewController
-    }
-}
-
-extension BackgroundMapWithDrawerViewController: PulleyDelegate {
     // If there is less than this amount of space (in points) between the top of the drawer and the top of this view,
     // don't attempt to fit the map content into such a small space (otherwise the map zooms way out awkwardly)
-    private static let minimumRemainingSpaceAtTopOfScreen: CGFloat = 300.0
+    private static let minimumRemainingSpaceAtTopOfScreen: CGFloat = 50.0
 
-    public func drawerChangedDistanceFromBottom(drawer _: PulleyViewController,
-                                                distance: CGFloat,
-                                                bottomSafeArea _: CGFloat) {
-        let remainingSpaceAtTopOfScreen = view.frame.height - distance
+    public func numberOfNotches(in _: OverlayContainerViewController) -> Int {
+        return OverlayNotch.allCases.count
+    }
+
+    public func overlayContainerViewController(_: OverlayContainerViewController,
+                                               heightForNotchAt index: Int,
+                                               availableSpace _: CGFloat) -> CGFloat {
+        return heightOf(notch: OverlayNotch.allCases[index])
+    }
+
+    private func heightOf(notch: OverlayNotch) -> CGFloat {
+        let collapsedHeight = collapsedDrawerHeight + drawerViewController.contentTopInset
+        switch notch {
+        case .collapsed:
+            return collapsedHeight
+        case .expanded:
+            // Return the max of the desired expanded height and the collapsed height. This is because
+            // OverlayContainer throws an exception if the height of notch i is less than the height of notch i-1
+            return max(
+                expandedDrawerHeight
+                    + drawerViewController.contentTopInset
+                    + containerViewController.view.safeAreaInsets.bottom,
+                collapsedHeight
+            )
+        }
+    }
+
+    public func overlayContainerViewController(_: OverlayContainerViewController,
+                                               didMoveOverlay _: UIViewController,
+                                               toNotchAt index: Int) {
+        let remainingSpaceAtTopOfScreen = view.frame.height - heightOf(notch: OverlayNotch.allCases[index])
         let bottomInset = view.frame.height - max(
             remainingSpaceAtTopOfScreen,
             BackgroundMapWithDrawerViewController.minimumRemainingSpaceAtTopOfScreen

@@ -18,40 +18,61 @@ import RideOsCommon
 import RxSwift
 
 public class ConfirmingArrivalViewController: BackgroundMapViewController {
+    private let openTripDetailsListener: () -> Void
     private let confirmArrivalListener: () -> Void
+    private let backToNavigationListener: () -> Void
     private let confirmingArrivalDialogView: ConfirmingArrivalDialogView
     private let confirmingArrivalViewModel: ConfirmingArrivalViewModel
     private let schedulerProvider: SchedulerProvider
     private let disposeBag = DisposeBag()
 
-    public convenience init(titleText: String,
+    public convenience init(passengerTextFormat: String,
                             destinationWaypoint: VehiclePlan.Waypoint,
                             destinationIcon: DrawableMarkerIcon,
+                            openTripDetailsListener: @escaping () -> Void,
                             confirmArrivalListener: @escaping () -> Void,
+                            backToNavigationListener: @escaping () -> Void,
                             mapViewController: MapViewController,
+                            showBackToNavigation: Bool,
                             schedulerProvider: SchedulerProvider = DefaultSchedulerProvider()) {
-        let style = DefaultConfirmingArrivalViewModel.Style(destinationIcon: destinationIcon)
+        let passengerTextProvider: TripResourceInfo.PassengerTextProvider = { tripResourceInfo in
+            String(format: passengerTextFormat, TripResourceInfo.defaultPassengerTextProvider(tripResourceInfo))
+        }
 
-        self.init(titleText: titleText,
-                  confirmingArrivalViewModel: DefaultConfirmingArrivalViewModel(
-                      destinationWaypoint: destinationWaypoint,
-                      style: style
-                  ),
+        let style = DefaultConfirmingArrivalViewModel.Style(
+            passengerTextProvider: passengerTextProvider,
+            destinationIcon: destinationIcon
+        )
+
+        self.init(confirmingArrivalViewModel: DefaultConfirmingArrivalViewModel(
+            destinationWaypoint: destinationWaypoint,
+            style: style
+        ),
+                  openTripDetailsListener: openTripDetailsListener,
                   confirmArrivalListener: confirmArrivalListener,
+                  backToNavigationListener: backToNavigationListener,
                   mapViewController: mapViewController,
+                  showBackToNavigation: showBackToNavigation,
                   schedulerProvider: schedulerProvider)
     }
 
-    public init(titleText: String,
-                confirmingArrivalViewModel: ConfirmingArrivalViewModel,
+    public init(confirmingArrivalViewModel: ConfirmingArrivalViewModel,
+                openTripDetailsListener: @escaping () -> Void,
                 confirmArrivalListener: @escaping () -> Void,
+                backToNavigationListener: @escaping () -> Void,
                 mapViewController: MapViewController,
+                showBackToNavigation: Bool,
                 schedulerProvider: SchedulerProvider = DefaultSchedulerProvider()) {
         self.confirmingArrivalViewModel = confirmingArrivalViewModel
+        self.openTripDetailsListener = openTripDetailsListener
         self.confirmArrivalListener = confirmArrivalListener
+        self.backToNavigationListener = backToNavigationListener
         self.schedulerProvider = schedulerProvider
 
-        confirmingArrivalDialogView = ConfirmingArrivalDialogView(headerText: titleText)
+        confirmingArrivalDialogView = ConfirmingArrivalDialogView(
+            headerText: confirmingArrivalViewModel.passengersText,
+            showBackToNavigationButton: showBackToNavigation
+        )
 
         super.init(mapViewController: mapViewController)
     }
@@ -63,14 +84,24 @@ public class ConfirmingArrivalViewController: BackgroundMapViewController {
     public override func viewDidLoad() {
         super.viewDidLoad()
 
-        confirmingArrivalViewModel.arrivalDetailText
+        confirmingArrivalDialogView.showDetailsTapEvents
             .observeOn(schedulerProvider.mainThread())
-            .subscribe(onNext: { [confirmingArrivalDialogView] in confirmingArrivalDialogView.set(addressText: $0) })
+            .subscribe(onNext: { [openTripDetailsListener] _ in openTripDetailsListener() })
             .disposed(by: disposeBag)
 
         confirmingArrivalDialogView.confirmArrivalButtonTapEvents
             .observeOn(schedulerProvider.mainThread())
             .subscribe(onNext: { [confirmingArrivalViewModel] _ in confirmingArrivalViewModel.confirmArrival() })
+            .disposed(by: disposeBag)
+
+        confirmingArrivalDialogView.backToNavigationButtonTapEvents
+            .observeOn(schedulerProvider.mainThread())
+            .subscribe(onNext: { [backToNavigationListener] _ in backToNavigationListener() })
+            .disposed(by: disposeBag)
+
+        confirmingArrivalViewModel.addressText
+            .observeOn(schedulerProvider.mainThread())
+            .subscribe(onNext: { [confirmingArrivalDialogView] in confirmingArrivalDialogView.set(mainText: $0) })
             .disposed(by: disposeBag)
 
         confirmingArrivalViewModel.confirmingArrivalState

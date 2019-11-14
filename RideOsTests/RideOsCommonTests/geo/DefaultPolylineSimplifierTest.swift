@@ -41,4 +41,13 @@ class DefaultPolylineSimplifierTest: XCTestCase {
         XCTAssertEqual(polylineSimplifierUnderTest.simplify(polyline: coordinates),
                        SwiftSimplify.simplify(coordinates, tolerance: DefaultPolylineSimplifierTest.toleranceDegrees))
     }
+    
+    func testSimplifyOnEmptyPolylineReturnsAnEmptyPolyline() {
+        XCTAssertEqual(polylineSimplifierUnderTest.simplify(polyline: []), [])
+    }
+    
+    func testSimplifyOnPolylineWithOnePointReturnsTheInputPolyline() {
+        let coordinates = [CLLocationCoordinate2D(latitude: 37.8021999, longitude: -122.4181229)]
+        XCTAssertEqual(polylineSimplifierUnderTest.simplify(polyline: coordinates), coordinates)
+    }
 }

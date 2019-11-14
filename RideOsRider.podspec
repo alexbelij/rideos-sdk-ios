@@ -1,6 +1,6 @@
 Pod::Spec.new do |s|
   s.name             = 'RideOsRider'
-  s.version          = '0.2.0'
+  s.version          = '0.3.0'
   s.summary          = 'rideOS SDK for building ridehailing rider apps'
 
   s.description      = <<-DESC
@@ -10,7 +10,7 @@ Pod::Spec.new do |s|
   s.homepage         = 'https://github.com/rideOS/rideos-sdk-ios'
   s.license          = { :type => 'Apache License, Version 2.0', :file => 'LICENSE' }
   s.author           = { 'rideOS' => 'support@rideos.ai' }
-  s.source           = { :git => 'https://github.com/rideOS/rideos-sdk-ios.git', :tag => '0.2.0' }
+  s.source           = { :git => 'https://github.com/rideOS/rideos-sdk-ios.git', :tag => '0.3.0' }
 
   s.ios.deployment_target = '11.0'
   s.swift_version = '5.0'
@@ -22,7 +22,7 @@ Pod::Spec.new do |s|
   s.dependency 'RxSwiftExt', '~> 3.4'
   s.dependency 'RxOptional', '~> 3.6'
   s.dependency 'SideMenu', '~> 5.0'
-	s.dependency 'Pulley', '~> 2.7'
+  s.dependency 'OverlayContainer', '~> 3.1'
   
   s.source_files = 'RideOsRider/**/*.{swift, h, m}'
   s.resource_bundles = {

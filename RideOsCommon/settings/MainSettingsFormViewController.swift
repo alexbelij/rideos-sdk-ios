@@ -40,17 +40,17 @@ public class MainSettingsFormViewController: FormViewController, UINavigationCon
     private let userStorageReader: UserStorageReader
     private let userStorageWriter: UserStorageWriter
     private let user: User
-    private let developerSettingsFormViewControllerFactory: DeveloperSettingsFormViewControllerFactory?
+    private let menuOptions: [MenuOption]
 
     private var userEmailAddress: String?
 
     public init(userStorageReader: UserStorageReader = UserDefaultsUserStorageReader(),
                 userStorageWriter: UserStorageWriter = UserDefaultsUserStorageWriter(),
                 user: User = User.currentUser,
-                developerSettingsFormViewControllerFactory: DeveloperSettingsFormViewControllerFactory?) {
+                menuOptions: [MenuOption]) {
         self.userStorageReader = userStorageReader
         self.userStorageWriter = userStorageWriter
-        self.developerSettingsFormViewControllerFactory = developerSettingsFormViewControllerFactory
+        self.menuOptions = menuOptions
         self.user = user
         super.init(nibName: nil, bundle: nil)
     }
@@ -125,27 +125,16 @@ public class MainSettingsFormViewController: FormViewController, UINavigationCon
 
         let section = Section()
         form +++ section
-            <<< ButtonRow { row in
-                row.title = MainSettingsFormViewController.editProfileString
-                row.presentationMode = .show(controllerProvider: ControllerProvider.callback(builder: {
-                    AccountSettingsFormViewController(userStorageReader: self.userStorageReader,
-                                                      userStorageWriter: self.userStorageWriter,
-                                                      userEmailAddress: self.userEmailAddress)
-                }), onDismiss: nil)
-            }
-            .cellSetup { cell, _ in
-                cell.imageView?.image = CommonImages.person()
-            }
 
-        if let developerSettingsFormViewControllerFactory = developerSettingsFormViewControllerFactory {
+        for menuOption in menuOptions {
             section <<< ButtonRow { row in
-                row.title = MainSettingsFormViewController.developerSettingsString
+                row.title = menuOption.title
                 row.presentationMode = .show(controllerProvider: ControllerProvider.callback(builder: {
-                    developerSettingsFormViewControllerFactory(self.userStorageReader, self.userStorageWriter)
+                    menuOption.viewControllerFactory()
                 }), onDismiss: nil)
             }
             .cellSetup { cell, _ in
-                cell.imageView?.image = CommonImages.gear()
+                cell.imageView?.image = menuOption.icon
             }
         }
     }

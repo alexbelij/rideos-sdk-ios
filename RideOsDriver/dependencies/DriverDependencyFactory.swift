@@ -17,5 +17,6 @@ import Foundation
 import RideOsCommon
 
 public protocol DriverDependencyFactory: CommonDependencyFactory {
+    var menuOptions: [MenuOption] { get }
     var pushNotificationManager: PushNofificationManager? { get }
 }

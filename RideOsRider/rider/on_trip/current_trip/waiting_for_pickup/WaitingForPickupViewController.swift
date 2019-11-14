@@ -25,13 +25,23 @@ public class WaitingForPickupViewController: MatchedToVehicleViewController {
     public init(mapViewController: MapViewController,
                 initialPassengerState: RiderTripStateModel,
                 cancelListener: @escaping () -> Void,
+                editDropoffListener: @escaping () -> Void,
                 schedulerProvider: SchedulerProvider = DefaultSchedulerProvider()) {
-        // TODO(chrism): Once https://github.com/rideOS/pangea/issues/5322 is fixed, use BeforePickupDialog here so
-        // that users can edit their pickup location
-        super.init(dialogView: AfterPickupDialog(showCancelButton: true),
+        // TODO(chrism): Once https://github.com/rideOS/pangea/issues/5322 is fixed, change showEditPickupButton to
+        // true
+        let dialogView = MatchedToVehicleDialog(
+            cancelButtonTitle: RideOsRiderResourceLoader.instance.getString(
+                "ai.rideos.rider.on-trip.waiting-for-pickup.cancel-button-title"
+            ),
+            showEditPickupButton: false,
+            showEditDropoffButton: true
+        )
+        super.init(dialogView: dialogView,
                    mapViewController: mapViewController,
                    viewModel: DefaultWaitingForPickupViewModel(initialPassengerState: initialPassengerState),
                    cancelListener: cancelListener,
+                   editPickupListener: nil,
+                   editDropoffListener: editDropoffListener,
                    schedulerProvider: schedulerProvider)
     }
 }

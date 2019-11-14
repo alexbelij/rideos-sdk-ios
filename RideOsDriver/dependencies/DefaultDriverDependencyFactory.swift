@@ -23,11 +23,45 @@ open class DefaultDriverDependencyFactory: DriverDependencyFactory {
         pushNotificationManagerInstance = pushNotificationManager
     }
 
+    open var userProfileInteractor: UserProfileInteractor {
+        return DriverUserProfileInteractor()
+    }
+
     open var fleetInteractor: FleetInteractor {
         return DefaultFleetInteractor()
     }
 
     open var pushNotificationManager: PushNofificationManager? {
         return pushNotificationManagerInstance
+    }
+
+    open var menuOptions: [MenuOption] {
+        return [
+            MenuOption(
+                title: RideOsCommonResourceLoader.instance.getString(
+                    "ai.rideos.common.settings.developer.edit-profile"
+                ),
+                icon: CommonImages.person(),
+                viewControllerFactory: {
+                    AccountSettingsFormViewController()
+                }
+            ),
+            MenuOption(
+                title: RideOsDriverResourceLoader.instance.getString("ai.rideos.driver.settings.vehicle-info.title"),
+                icon: DriverImages.carFront(),
+                viewControllerFactory: {
+                    VehicleSettingsFormViewController()
+                }
+            ),
+            MenuOption(
+                title: RideOsCommonResourceLoader.instance.getString("ai.rideos.common.settings.developer"),
+                icon: CommonImages.gear(),
+                viewControllerFactory: {
+                    DriverDeveloperSettingsFormViewController(
+                        fleetSelectionViewModel: DefaultFleetSelectionViewModel()
+                    )
+                }
+            ),
+        ]
     }
 }

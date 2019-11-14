@@ -21,7 +21,7 @@ import RideOsCommon
 import RxSwift
 
 public class MapboxNavigationViewController: BackgroundMapViewController, VehicleNavigationController {
-    private var navigationDoneListener: (() -> Void)?
+    private var navigationDoneListener: ((Bool) -> Void)?
     private var currentDestination = kCLLocationCoordinate2DInvalid
 
     private let schedulerProvider: SchedulerProvider
@@ -83,6 +83,13 @@ public class MapboxNavigationViewController: BackgroundMapViewController, Vehicl
                         options = NavigationOptions(navigationService: simulatedNavigationService)
                     }
 
+                    let bottomBanner = CustomizedBottomBannerViewController()
+                    if let options = options {
+                        options.bottomBanner = bottomBanner
+                    } else {
+                        options = NavigationOptions(bottomBanner: bottomBanner)
+                    }
+
                     let controller = MapboxNavigation.NavigationViewController(for: mapboxRoute, options: options)
                     controller.showsEndOfRouteFeedback = false
                     controller.delegate = self
@@ -95,6 +102,8 @@ public class MapboxNavigationViewController: BackgroundMapViewController, Vehicl
                     // trip, as normal.
                     controller.navigationService.delegate = self
 
+                    bottomBanner.delegate = controller
+
                     self.mapboxNavigationViewController = controller
                     self.present(controller, animated: true, completion: nil)
                 }
@@ -103,7 +112,7 @@ public class MapboxNavigationViewController: BackgroundMapViewController, Vehicl
     }
 
     public func navigate(to destination: CLLocationCoordinate2D,
-                         navigationDoneListener: @escaping () -> Void) {
+                         navigationDoneListener: @escaping (Bool) -> Void) {
         currentDestination = destination
         self.navigationDoneListener = navigationDoneListener
         mapboxNavigationViewModel.route(to: destination)
@@ -115,12 +124,12 @@ public class MapboxNavigationViewController: BackgroundMapViewController, Vehicl
 extension MapboxNavigationViewController: MapboxNavigation.NavigationViewControllerDelegate {
     public func navigationViewControllerDidDismiss(_: MapboxNavigation.NavigationViewController,
                                                    byCanceling _: Bool) {
-        navigationDoneListener?()
+        navigationDoneListener?(true)
     }
 
     public func navigationViewController(_: MapboxNavigation.NavigationViewController,
                                          didArriveAt _: MapboxDirections.Waypoint) -> Bool {
-        navigationDoneListener?()
+        navigationDoneListener?(false)
         return true
     }
 

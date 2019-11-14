@@ -19,7 +19,9 @@ import RxSwift
 import RxSwiftExt
 
 public class DefaultPreTripViewModel: PreTripViewModel {
-    private static let defaultPreTripState = PreTripState.selectingPickupDropoff
+    private static let defaultPreTripState = PreTripState.selectingPickupDropoff(initialPickupLocation: nil,
+                                                                                 initialDropoffLocation: nil,
+                                                                                 initialFocus: .dropoff)
     private static let defaultSeatCount: UInt32 = 1
     private static let tripInteractorRetryCount: UInt = 5
 
@@ -52,7 +54,10 @@ public class DefaultPreTripViewModel: PreTripViewModel {
             .flatMap { state, fleet, passengerName in
                 DefaultPreTripViewModel.createTask(
                     passengerId: userStorageReader.userId,
-                    passengerName: passengerName,
+                    passengerContactInfo: ContactInfo(
+                        name: passengerName,
+                        phoneNumber: userStorageReader.get(CommonUserStorageKeys.phoneNumber)
+                    ),
                     fleetId: fleet.fleetId,
                     state: state,
                     tripInteractor: tripInteractor,
@@ -113,6 +118,22 @@ public class DefaultPreTripViewModel: PreTripViewModel {
         }
     }
 
+    public func cancelConfirmTrip() {
+        stateMachine.transition { currentState in
+            switch currentState {
+            case let .confirmingTrip(pickup, dropoff):
+                return .selectingPickupDropoff(
+                    initialPickupLocation: PreTripLocation(desiredAndAssignedLocation: pickup, wasConfirmed: true),
+                    initialDropoffLocation: PreTripLocation(desiredAndAssignedLocation: dropoff, wasConfirmed: true),
+                    initialFocus: .dropoff
+                )
+            default:
+                throw InvalidStateTransitionError.invalidStateTransition(
+                    "\(#function) called on invalid step \(currentState)")
+            }
+        }
+    }
+
     public func confirm(seatCount: UInt32) {
         stateMachine.transition { currentState in
             guard case let .confirmingSeats(confirmedPickupLocation, confirmedDropoffLocation, selectedVehicle) = currentState else {
@@ -128,7 +149,7 @@ public class DefaultPreTripViewModel: PreTripViewModel {
     }
 
     private static func createTask(passengerId: String,
-                                   passengerName: String,
+                                   passengerContactInfo: ContactInfo,
                                    fleetId: String,
                                    state: PreTripState,
                                    tripInteractor: TripInteractor,
@@ -143,7 +164,7 @@ public class DefaultPreTripViewModel: PreTripViewModel {
             }
             return tripInteractor
                 .createTripForPassenger(passengerId: passengerId,
-                                        contactInfo: ContactInfo(name: passengerName),
+                                        contactInfo: passengerContactInfo,
                                         fleetId: fleetId,
                                         numPassengers: numPassengers,
                                         pickupLocation: confirmedPickupLocation.namedTripLocation.tripLocation,
@@ -166,74 +187,13 @@ extension DefaultPreTripViewModel {
                 throw InvalidStateTransitionError.invalidStateTransition(
                     "\(#function) called on invalid step \(currentState)")
             }
-
-            if dropoff.wasSetOnMap {
-                if pickup.wasSetOnMap {
-                    return .confirmingTrip(confirmedPickupLocation: pickup.desiredAndAssignedLocation,
-                                           confirmedDropoffLocation: dropoff.desiredAndAssignedLocation)
-                } else {
-                    return .confirmingPickup(unconfirmedPickupLocation: pickup,
-                                             confirmedDropoffLocation: dropoff.desiredAndAssignedLocation)
-                }
-            } else {
-                return .confirmingDropoff(unconfirmedPickupLocation: pickup,
-                                          unconfirmedDropoffLocation: dropoff)
-            }
+            return .confirmingTrip(confirmedPickupLocation: pickup.desiredAndAssignedLocation,
+                                   confirmedDropoffLocation: dropoff.desiredAndAssignedLocation)
         }
     }
 
     public func cancelSetPickupDropoff() {
         listener?.cancelPreTrip()
-    }
-}
-
-// MARK: ConfirmLocationListener
-
-extension DefaultPreTripViewModel: ConfirmLocationListener {
-    public func confirmLocation(_ location: DesiredAndAssignedLocation) {
-        stateMachine.transition { currentState in
-            switch currentState {
-            case .confirmingDropoff(let unconfirmedPickupLocation, _):
-                if unconfirmedPickupLocation.wasSetOnMap {
-                    return .confirmingTrip(confirmedPickupLocation: unconfirmedPickupLocation.desiredAndAssignedLocation,
-                                           confirmedDropoffLocation: location)
-                } else {
-                    return .confirmingPickup(unconfirmedPickupLocation: unconfirmedPickupLocation,
-                                             confirmedDropoffLocation: location)
-                }
-            case let .confirmingPickup(_, confirmedDropoffLocation):
-                return .confirmingTrip(confirmedPickupLocation: location,
-                                       confirmedDropoffLocation: confirmedDropoffLocation)
-
-            default:
-                throw InvalidStateTransitionError.invalidStateTransition(
-                    "\(#function) called on invalid step \(currentState)")
-            }
-        }
-    }
-
-    public func cancelConfirmLocation() {
-        stateMachine.transition { currentState in
-            switch currentState {
-            case .confirmingPickup(_, _), .confirmingDropoff:
-                return .selectingPickupDropoff
-            default:
-                throw InvalidStateTransitionError.invalidStateTransition(
-                    "\(#function) called on invalid step \(currentState)")
-            }
-        }
-    }
-
-    public func cancelConfirmTrip() {
-        stateMachine.transition { currentState in
-            switch currentState {
-            case .confirmingTrip:
-                return .selectingPickupDropoff
-            default:
-                throw InvalidStateTransitionError.invalidStateTransition(
-                    "\(#function) called on invalid step \(currentState)")
-            }
-        }
     }
 
     public static func defaultPassengerName() -> Observable<String> {

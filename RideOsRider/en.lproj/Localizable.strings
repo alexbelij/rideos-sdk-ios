@@ -91,6 +91,9 @@
 /* Updating your pickup location */
 "ai.rideos.rider.on-trip.updating-pickup.header" = "Updating your pickup location";
 
+/* Updating your dropoff location */
+"ai.rideos.rider.on-trip.updating-dropoff.header" = "Updating your drop-off location";
+
 /* Text in the start screen's text box */
 "ai.rideos.rider.start-screen.button-title" = "Where are you going?";
 
@@ -111,3 +114,18 @@
 
 /* Seat selection: Action button title */
 "ai.rideos.rider.confirm-seats.button-title" = "Confirm";
+
+/* Cancel button title while driving to pickup */
+"ai.rideos.rider.on-trip.driving-to-pickup.cancel-button-title" = "Cancel Request";
+
+/* Cancel button title while waiting for pickup */
+"ai.rideos.rider.on-trip.waiting-for-pickup.cancel-button-title" = "Cancel Request";
+
+/* Trip details header */
+"ai.rideos.rider.on-trip.trip-details.header" = "TRIP DETAILS";
+
+/* Trip details pickup label */
+"ai.rideos.rider.on-trip.trip-details.pickup" = "PICKUP";
+
+/* Trip details drop-off label */
+"ai.rideos.rider.on-trip.trip-details.drop-off" = "DROP-OFF";

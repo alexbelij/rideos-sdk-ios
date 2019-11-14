@@ -29,6 +29,7 @@ public protocol TripInteractor {
     func cancelTrip(passengerId: String, tripId: String) -> Completable
     func getCurrentTrip(forPassenger passengerId: String) -> Observable<String?>
     func editPickup(tripId: String, newPickupLocation: TripLocation) -> Observable<String>
+    func editDropoff(tripId: String, newDropoffLocation: TripLocation) -> Observable<String>
 }
 
 public enum TripInteractorError: Error {

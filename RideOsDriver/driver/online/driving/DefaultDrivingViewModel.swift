@@ -19,6 +19,12 @@ import RideOsCommon
 import RxSwift
 
 public class DefaultDrivingViewModel: DrivingViewModel {
+    public var drivingViewState: Observable<DrivingViewState> {
+        return stateMachine.observeCurrentState()
+            .distinctUntilChanged()
+            .map { [destination] in DrivingViewState(drivingStep: $0, destination: destination) }
+    }
+
     private let destination: CLLocationCoordinate2D
     private let schedulerProvider: SchedulerProvider
 
@@ -34,15 +40,16 @@ public class DefaultDrivingViewModel: DrivingViewModel {
         stateMachine = StateMachine(schedulerProvider: schedulerProvider, initialState: initialStep, logger: logger)
     }
 
-    public var drivingViewState: Observable<DrivingViewState> {
-        return stateMachine.observeCurrentState()
-            .distinctUntilChanged()
-            .map { [destination] in DrivingViewState(drivingStep: $0, destination: destination) }
+    public func getCurrentDrivingViewState() throws -> DrivingViewState {
+        return try DrivingViewState(drivingStep: stateMachine.getCurrentState(), destination: destination)
     }
 
     public func startNavigation() {
         stateMachine.transition { currentState in
-            guard case .drivePending = currentState else {
+            guard [
+                DrivingViewState.Step.drivePending,
+                DrivingViewState.Step.confirmingArrival(showBackToNavigation: true),
+            ].contains(currentState) else {
                 throw InvalidStateTransitionError.invalidStateTransition(
                     "\(#function) called during invalid state: \(currentState)")
             }
@@ -62,14 +69,14 @@ public class DefaultDrivingViewModel: DrivingViewModel {
         }
     }
 
-    public func finishedNavigation() {
+    public func finishedNavigation(didCancelNavigation: Bool) {
         stateMachine.transition { currentState in
             guard case .navigating = currentState else {
                 throw InvalidStateTransitionError.invalidStateTransition(
                     "\(#function) called during invalid state: \(currentState)")
             }
 
-            return .confirmingArrival
+            return .confirmingArrival(showBackToNavigation: didCancelNavigation)
         }
     }
 }

@@ -23,10 +23,39 @@ public class DefaultOnlineViewModel: OnlineViewModel {
     private static let syncVehicleStateUpdateInterval: RxTimeInterval = 2.0
     private static let interactorRetryCount = 2
 
+    public var onlineViewState: Observable<OnlineViewState> {
+        return Observable.combineLatest(shouldShowTripDetailsSubject, currentPlan)
+            .observeOn(schedulerProvider.computation())
+            .map { shouldShowTripDetailsAndVehiclePlan -> OnlineViewState in
+                let shouldShowTripDetails = shouldShowTripDetailsAndVehiclePlan.0
+                let plan = shouldShowTripDetailsAndVehiclePlan.1
+
+                if shouldShowTripDetails {
+                    return .tripDetails(plan: plan)
+                }
+
+                guard !plan.waypoints.isEmpty else {
+                    return .idle
+                }
+
+                let currentWaypoint = plan.waypoints[0]
+                switch currentWaypoint.action.actionType {
+                case .driveToPickup:
+                    return .drivingToPickup(waypoint: currentWaypoint)
+                case .driveToDropoff:
+                    return .drivingToDropoff(waypoint: currentWaypoint)
+                case .loadResource:
+                    return .waitingForPassenger(waypoint: currentWaypoint)
+                }
+            }
+            .distinctUntilChanged()
+    }
+
     private let disposeBag = DisposeBag()
 
     private let forceGetPlanSubject = PublishSubject<Bool>()
     private let currentPlan = BehaviorSubject(value: VehiclePlan(waypoints: []))
+    private let shouldShowTripDetailsSubject = BehaviorSubject(value: false)
 
     private weak var goOfflineListener: GoOfflineListener?
     private let driverPlanInteractor: DriverPlanInteractor
@@ -55,25 +84,12 @@ public class DefaultOnlineViewModel: OnlineViewModel {
         startSynchronizingVehicleState(deviceLocator: deviceLocator)
     }
 
-    public func getOnlineViewState() -> Observable<OnlineViewState> {
-        return currentPlan
-            .observeOn(schedulerProvider.computation())
-            .map { plan -> OnlineViewState in
-                guard !plan.waypoints.isEmpty else {
-                    return .idle
-                }
+    public func openTripDetails() {
+        shouldShowTripDetailsSubject.onNext(true)
+    }
 
-                let currentWaypoint = plan.waypoints[0]
-                switch currentWaypoint.action.actionType {
-                case .driveToPickup:
-                    return .drivingToPickup(waypoint: currentWaypoint)
-                case .driveToDropoff:
-                    return .drivingToDropoff(waypoint: currentWaypoint)
-                case .loadResource:
-                    return .waitingForPassenger(waypoint: currentWaypoint)
-                }
-            }
-            .distinctUntilChanged()
+    public func closeTripDetails() {
+        shouldShowTripDetailsSubject.onNext(false)
     }
 
     private func startPollingForPlanUpdates() {

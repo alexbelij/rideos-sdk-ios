@@ -18,25 +18,23 @@ import RideOsCommon
 import RxSwift
 
 public class DrivingCoordinator: Coordinator {
-    private let drivingViewModel: DrivingViewModel
-
     private let vehicleNavigationControllerProvider: () -> UIVehicleNavigationController
-    private let destinationWaypoint: VehiclePlan.Waypoint
-    private let destinationIcon: DrawableMarkerIcon
-    private let drivePendingTitle: String
-    private let confirmArrivalTitle: String
+    private var drivingViewModel: DrivingViewModel?
+    private var destinationWaypoint: VehiclePlan.Waypoint?
+    private var destinationIcon: DrawableMarkerIcon?
+    private var passengerTextFormat: String?
     private let mapViewController: MapViewController
+    private let openTripDetailsListener: () -> Void
     private let schedulerProvider: SchedulerProvider
+    private let logger: Logger
     private let disposeBag = DisposeBag()
 
-    private convenience init(destinationWaypoint: VehiclePlan.Waypoint,
-                             destinationIcon: DrawableMarkerIcon,
-                             drivePendingTitle: String,
-                             confirmArrivalTitle: String,
-                             mapViewController: MapViewController,
-                             navigationController: UINavigationController,
-                             userStorageReader: UserStorageReader = UserDefaultsUserStorageReader(),
-                             schedulerProvider: SchedulerProvider = DefaultSchedulerProvider()) {
+    public convenience init(mapViewController: MapViewController,
+                            openTripDetailsListener: @escaping () -> Void,
+                            navigationController: UINavigationController,
+                            userStorageReader: UserStorageReader = UserDefaultsUserStorageReader(),
+                            schedulerProvider: SchedulerProvider = DefaultSchedulerProvider(),
+                            logger: Logger = LoggerDependencyRegistry.instance.logger) {
         let vehicleNavigationControllerProvider: () -> UIVehicleNavigationController = {
             let simulatedDeviceLocator: SimulatedDeviceLocator?
 
@@ -55,31 +53,24 @@ public class DrivingCoordinator: Coordinator {
         }
 
         self.init(vehicleNavigationControllerProvider: vehicleNavigationControllerProvider,
-                  destinationWaypoint: destinationWaypoint,
-                  destinationIcon: destinationIcon,
-                  drivePendingTitle: drivePendingTitle,
-                  confirmArrivalTitle: confirmArrivalTitle,
                   mapViewController: mapViewController,
+                  openTripDetailsListener: openTripDetailsListener,
                   navigationController: navigationController,
-                  schedulerProvider: schedulerProvider)
+                  schedulerProvider: schedulerProvider,
+                  logger: logger)
     }
 
     private init(vehicleNavigationControllerProvider: @escaping () -> UIVehicleNavigationController,
-                 destinationWaypoint: VehiclePlan.Waypoint,
-                 destinationIcon: DrawableMarkerIcon,
-                 drivePendingTitle: String,
-                 confirmArrivalTitle: String,
                  mapViewController: MapViewController,
+                 openTripDetailsListener: @escaping () -> Void,
                  navigationController: UINavigationController,
-                 schedulerProvider: SchedulerProvider = DefaultSchedulerProvider()) {
+                 schedulerProvider: SchedulerProvider = DefaultSchedulerProvider(),
+                 logger: Logger = LoggerDependencyRegistry.instance.logger) {
         self.vehicleNavigationControllerProvider = vehicleNavigationControllerProvider
-        self.destinationWaypoint = destinationWaypoint
-        self.destinationIcon = destinationIcon
-        self.drivePendingTitle = drivePendingTitle
-        self.confirmArrivalTitle = confirmArrivalTitle
         self.mapViewController = mapViewController
+        self.openTripDetailsListener = openTripDetailsListener
         self.schedulerProvider = schedulerProvider
-        drivingViewModel = DefaultDrivingViewModel(destination: destinationWaypoint.action.destination)
+        self.logger = logger
 
         super.init(navigationController: navigationController)
     }
@@ -88,7 +79,38 @@ public class DrivingCoordinator: Coordinator {
         fatalError("\(#function) has not been implemented")
     }
 
+    public func start(
+        with waypoint: VehiclePlan.Waypoint,
+        destinationIcon: DrawableMarkerIcon,
+        passengerTextFormat: String
+    ) {
+        let viewModel: DrivingViewModel
+
+        if let drivingViewModel = drivingViewModel, let currentState = try? drivingViewModel.getCurrentDrivingViewState() {
+            if currentState.destination != waypoint.action.destination {
+                viewModel = DefaultDrivingViewModel(destination: waypoint.action.destination)
+            } else {
+                viewModel = DefaultDrivingViewModel(
+                    destination: waypoint.action.destination,
+                    initialStep: currentState.drivingStep
+                )
+            }
+        } else {
+            viewModel = DefaultDrivingViewModel(destination: waypoint.action.destination)
+        }
+
+        drivingViewModel = viewModel
+        destinationWaypoint = waypoint
+        self.destinationIcon = destinationIcon
+        self.passengerTextFormat = passengerTextFormat
+    }
+
     public override func activate() {
+        guard let drivingViewModel = drivingViewModel else {
+            logger.logError("Must call start() before \(#function)")
+            return
+        }
+
         drivingViewModel.drivingViewState
             .observeOn(schedulerProvider.mainThread())
             .subscribe(onNext: { [unowned self] drivingState in
@@ -97,79 +119,88 @@ public class DrivingCoordinator: Coordinator {
                     self.showDrivePending()
                 case .navigating:
                     self.showNavigation()
-                case .confirmingArrival:
-                    self.showConfirmingArrival()
+                case let .confirmingArrival(showBackToNavigation):
+                    self.showConfirmingArrival(showBackToNavgiation: showBackToNavigation)
                 }
             })
             .disposed(by: disposeBag)
     }
 
     private func showDrivePending() {
+        guard let drivingViewModel = drivingViewModel,
+            let passengerTextFormat = passengerTextFormat,
+            let destinationWaypoint = destinationWaypoint,
+            let destinationIcon = destinationIcon else {
+            logger.logError("Must call start() before \(#function)")
+            return
+        }
+
         let startNavigationListener = { [drivingViewModel] in drivingViewModel.startNavigation() }
 
-        showChild(viewController: DrivePendingViewController(titleText: drivePendingTitle,
-                                                             destination: destinationWaypoint.action.destination,
+        showChild(viewController: DrivePendingViewController(passengerTextFormat: passengerTextFormat,
+                                                             destinationWaypoint: destinationWaypoint,
                                                              destinationIcon: destinationIcon,
+                                                             openTripDetailsListener: openTripDetailsListener,
                                                              startNavigationListener: startNavigationListener,
                                                              mapViewController: mapViewController))
     }
 
     private func showNavigation() {
+        guard let drivingViewModel = drivingViewModel,
+            let destinationWaypoint = destinationWaypoint else {
+            logger.logError("Must call start() before \(#function)")
+            return
+        }
+
         let controller = vehicleNavigationControllerProvider()
         showChild(viewController: controller)
 
-        controller.navigate(to: destinationWaypoint.action.destination) { [drivingViewModel] in
-            drivingViewModel.finishedNavigation()
+        controller.navigate(to: destinationWaypoint.action.destination) { [drivingViewModel] didCancelNavigation in
+            drivingViewModel.finishedNavigation(didCancelNavigation: didCancelNavigation)
         }
     }
 
-    private func showConfirmingArrival() {
-        let confirmArrivalListener = { [drivingViewModel] in drivingViewModel.arrivalConfirmed() }
+    private func showConfirmingArrival(showBackToNavgiation: Bool) {
+        guard let drivingViewModel = drivingViewModel,
+            let passengerTextFormat = passengerTextFormat,
+            let destinationWaypoint = destinationWaypoint,
+            let destinationIcon = destinationIcon else {
+            logger.logError("Must call start() before \(#function)")
+            return
+        }
 
-        showChild(viewController: ConfirmingArrivalViewController(titleText: confirmArrivalTitle,
+        let confirmArrivalListener = { [drivingViewModel] in drivingViewModel.arrivalConfirmed() }
+        let backToNavigationListener = { [drivingViewModel] in drivingViewModel.startNavigation() }
+
+        showChild(viewController: ConfirmingArrivalViewController(passengerTextFormat: passengerTextFormat,
                                                                   destinationWaypoint: destinationWaypoint,
                                                                   destinationIcon: destinationIcon,
+                                                                  openTripDetailsListener: openTripDetailsListener,
                                                                   confirmArrivalListener: confirmArrivalListener,
-                                                                  mapViewController: mapViewController))
+                                                                  backToNavigationListener: backToNavigationListener,
+                                                                  mapViewController: mapViewController,
+                                                                  showBackToNavigation: showBackToNavgiation))
     }
 }
 
 extension DrivingCoordinator {
-    public static func forPickup(
-        destinationWaypoint: VehiclePlan.Waypoint,
-        mapViewController: MapViewController,
-        navigationController: UINavigationController
-    ) -> DrivingCoordinator {
-        return DrivingCoordinator(
-            destinationWaypoint: destinationWaypoint,
+    public static func startPickup(with waypoint: VehiclePlan.Waypoint, coordinator: DrivingCoordinator) {
+        coordinator.start(
+            with: waypoint,
             destinationIcon: DrawableMarkerIcons.pickupPin(),
-            drivePendingTitle: RideOsDriverResourceLoader.instance.getString(
-                "ai.rideos.driver.online.drive-to-pickup.title"
-            ),
-            confirmArrivalTitle: RideOsDriverResourceLoader.instance.getString(
-                "ai.rideos.driver.online.confirm-pickup-arrival.title"
-            ),
-            mapViewController: mapViewController,
-            navigationController: navigationController
+            passengerTextFormat: RideOsDriverResourceLoader.instance.getString(
+                "ai.rideos.driver.online.drive-to-pickup.passenger-text-format"
+            )
         )
     }
 
-    public static func forDropoff(
-        destinationWaypoint: VehiclePlan.Waypoint,
-        mapViewController: MapViewController,
-        navigationController: UINavigationController
-    ) -> DrivingCoordinator {
-        return DrivingCoordinator(
-            destinationWaypoint: destinationWaypoint,
+    public static func startDropoff(with waypoint: VehiclePlan.Waypoint, coordinator: DrivingCoordinator) {
+        coordinator.start(
+            with: waypoint,
             destinationIcon: DrawableMarkerIcons.dropoffPin(),
-            drivePendingTitle: RideOsDriverResourceLoader.instance.getString(
-                "ai.rideos.driver.online.drive-to-dropoff.title"
-            ),
-            confirmArrivalTitle: RideOsDriverResourceLoader.instance.getString(
-                "ai.rideos.driver.online.confirm-dropoff-arrival.title"
-            ),
-            mapViewController: mapViewController,
-            navigationController: navigationController
+            passengerTextFormat: RideOsDriverResourceLoader.instance.getString(
+                "ai.rideos.driver.online.drive-to-dropoff.passenger-text-format"
+            )
         )
     }
 }

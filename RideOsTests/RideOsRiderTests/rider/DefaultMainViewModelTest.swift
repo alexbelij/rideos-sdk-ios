@@ -1,3 +1,4 @@
+import Cuckoo
 import RideOsCommon
 import RideOsTestHelpers
 import RideOsRider
@@ -13,11 +14,21 @@ class DefaultMainViewModelTest: ReactiveTestCase {
 
     func setUp(currentTripSequence: [String?]) {
         super.setUp()
+        
+        let tripInteractor = MockTripInteractor()
+        stub(tripInteractor) { stub in
+            var ongoingStub = when(stub.getCurrentTrip(forPassenger: any()))
+                .thenReturn(Observable.just(currentTripSequence[0]))
+            for trip in currentTripSequence[1...] {
+                ongoingStub = ongoingStub.thenReturn(Observable.just(trip))
+            }
+        }
+        
         viewModelUnderTest = DefaultMainViewModel(
             userStorageReader: UserDefaultsUserStorageReader(
                 userDefaults: TemporaryUserDefaults(stringValues: [CommonUserStorageKeys.userId: "user id"])
             ),
-            tripInteractor: FixedTripInteractor(currentTripSequence: currentTripSequence),
+            tripInteractor: tripInteractor,
             schedulerProvider: TestSchedulerProvider(scheduler: scheduler),
             logger: ConsoleLogger()
         )

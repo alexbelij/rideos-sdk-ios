@@ -55,6 +55,7 @@ extension TripCompletedDialog {
         label.text = dropoffDisplayName
         label.font = UIFont.systemFont(ofSize: 22, weight: .semibold)
         label.textAlignment = .center
+        label.textColor = .black
         return label
     }
 }

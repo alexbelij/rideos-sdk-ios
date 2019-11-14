@@ -19,10 +19,18 @@ public struct MatchedToVehicleStatusModel: Equatable {
     public let status: String
     public let nextWaypoint: String
     public let vehicleInfo: VehicleInfo
+    public let pickupLabel: String
+    public let dropoffLabel: String
 
-    public init(status: String, nextWaypoint: String, vehicleInfo: VehicleInfo) {
+    public init(status: String,
+                nextWaypoint: String,
+                vehicleInfo: VehicleInfo,
+                pickupLabel: String,
+                dropoffLabel: String) {
         self.status = status
         self.nextWaypoint = nextWaypoint
         self.vehicleInfo = vehicleInfo
+        self.pickupLabel = pickupLabel
+        self.dropoffLabel = dropoffLabel
     }
 }

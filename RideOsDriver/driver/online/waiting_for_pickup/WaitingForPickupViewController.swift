@@ -20,26 +20,31 @@ import RxSwift
 public class WaitingForPickupViewController: BackgroundMapViewController {
     private let waitingForPickupDialogView: WatingForPickupDialogView
     private let waitingForPickupViewModel: WaitingForPickupViewModel
+    private let openTripDetailsListener: () -> Void
     private let schedulerProvider: SchedulerProvider
     private let disposeBag = DisposeBag()
 
     public convenience init(pickupWaypoint: VehiclePlan.Waypoint,
                             mapViewController: MapViewController,
+                            openTripDetailsListener: @escaping () -> Void,
                             schedulerProvider: SchedulerProvider = DefaultSchedulerProvider()) {
         let viewModel = DefaultWaitingForPickupViewModel(pickupWaypoint: pickupWaypoint)
 
         self.init(viewModel: viewModel,
                   mapViewController: mapViewController,
+                  openTripDetailsListener: openTripDetailsListener,
                   schedulerProvider: schedulerProvider)
     }
 
     public init(viewModel: WaitingForPickupViewModel,
                 mapViewController: MapViewController,
+                openTripDetailsListener: @escaping () -> Void,
                 schedulerProvider: SchedulerProvider = DefaultSchedulerProvider()) {
+        self.openTripDetailsListener = openTripDetailsListener
         self.schedulerProvider = schedulerProvider
         waitingForPickupViewModel = viewModel
 
-        waitingForPickupDialogView = WatingForPickupDialogView(pickupPassengersText: viewModel.passengersToPickupText)
+        waitingForPickupDialogView = WatingForPickupDialogView(headerText: viewModel.passengersText)
 
         super.init(mapViewController: mapViewController)
     }
@@ -51,9 +56,19 @@ public class WaitingForPickupViewController: BackgroundMapViewController {
     public override func viewDidLoad() {
         super.viewDidLoad()
 
+        waitingForPickupDialogView.showDetailsTapEvents
+            .observeOn(schedulerProvider.mainThread())
+            .subscribe(onNext: { [openTripDetailsListener] _ in openTripDetailsListener() })
+            .disposed(by: disposeBag)
+
         waitingForPickupDialogView.confirmPickupTapEvents
             .observeOn(schedulerProvider.mainThread())
             .subscribe(onNext: { [waitingForPickupViewModel] _ in waitingForPickupViewModel.confirmPickup() })
+            .disposed(by: disposeBag)
+
+        waitingForPickupViewModel.addressText
+            .observeOn(schedulerProvider.mainThread())
+            .subscribe(onNext: { [waitingForPickupDialogView] in waitingForPickupDialogView.set(mainText: $0) })
             .disposed(by: disposeBag)
 
         waitingForPickupViewModel.confirmingPickupState

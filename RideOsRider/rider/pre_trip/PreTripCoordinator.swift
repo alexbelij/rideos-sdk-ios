@@ -52,38 +52,19 @@ public class PreTripCoordinator: Coordinator {
             .observeOn(schedulerProvider.mainThread())
             .subscribe(onNext: { [unowned self] preTripState in
                 switch preTripState {
-                case .selectingPickupDropoff:
+                case let .selectingPickupDropoff(initialPickup, initialDropoff, initialFocus):
                     self.showChild(
                         coordinator: SetPickupDropoffCoordinator(
                             listener: self.viewModel,
                             mapViewController: self.mapViewController,
-                            navigationController: self.navigationController
+                            navigationController: self.navigationController,
+                            initialPickup: initialPickup,
+                            initialDropoff: initialDropoff,
+                            initialFocus: initialFocus,
+                            enablePickupSearch: true,
+                            enableDropoffSearch: true
                         )
                     )
-                case .confirmingPickup(let unconfirmedPickupLocation, _):
-                    self.showChild(viewController: ConfirmLocationViewController.buildForConfirmPickup(
-                        mapViewController: self.mapViewController,
-                        initialLocation: Observable.just(
-                            unconfirmedPickupLocation
-                                .desiredAndAssignedLocation
-                                .desiredLocation
-                                .tripLocation
-                                .location
-                        ).asSingle(),
-                        listener: self.viewModel
-                    ))
-                case let .confirmingDropoff(_, unconfirmedDropoffLocation):
-                    self.showChild(viewController: ConfirmLocationViewController.buildForConfirmDropoff(
-                        mapViewController: self.mapViewController,
-                        initialLocation: Observable.just(
-                            unconfirmedDropoffLocation
-                                .desiredAndAssignedLocation
-                                .desiredLocation
-                                .tripLocation
-                                .location
-                        ).asSingle(),
-                        listener: self.viewModel
-                    ))
                 case let .confirmingTrip(confirmedPickupLocation, confirmedDropoffLocation):
                     self.showChild(viewController: ConfirmTripViewController(
                         mapViewController: self.mapViewController,
@@ -92,7 +73,7 @@ public class PreTripCoordinator: Coordinator {
                         listener: self.viewModel,
                         confirmTripViewModelBuilder: ConfirmTripViewModelBuilder()
                     ))
-                case .confirmingSeats(let confirmedPickupLocation, let confirmedDropoffLocation, _):
+                case .confirmingSeats:
                     self.showChild(viewController: ConfirmSeatsViewController(
                         mapViewController: self.mapViewController,
                         listener: self.viewModel

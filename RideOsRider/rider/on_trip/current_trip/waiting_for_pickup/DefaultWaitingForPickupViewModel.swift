@@ -46,7 +46,9 @@ public class DefaultWaitingForPickupViewModel: DefaultMatchedToVehicleViewModel 
             dialogModel: MatchedToVehicleStatusModel(
                 status: DefaultWaitingForPickupViewModel.status,
                 nextWaypoint: pickup.displayName,
-                vehicleInfo: vehicleInfo
+                vehicleInfo: vehicleInfo,
+                pickupLabel: pickup.displayName,
+                dropoffLabel: dropoff.displayName
             )
         )
     }

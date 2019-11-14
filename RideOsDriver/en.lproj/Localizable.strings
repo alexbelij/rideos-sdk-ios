@@ -4,6 +4,12 @@
 /* Account settings section subheader title  */
 "ai.rideos.driver.settings.account.subheader.title" = "You can always update this under settings.";
 
+/* Account settings vehicle info title  */
+"ai.rideos.driver.settings.vehicle-info.title" = "Vehicle Info";
+
+/* Account settings vehicle info license plate section title  */
+"ai.rideos.driver.settings.vehicle-info.license-plate-section" = "LICENSE PLATE";
+
 /* Navigation developer settings section title */
 "ai.rideos.driver.settings.developer.navigation-section" = "NAVIGATION SETTINGS";
 
@@ -46,6 +52,9 @@
 /* Confirm arrival button title */
 "ai.rideos.driver.online.confirm-arrival.button.title" = "I've Arrived";
 
+/* Back to turn-by-turn navigation button title */
+"ai.rideos.driver.online.back-to-navigation.button.title" = "Back to Navigation";
+
 /* Confirm dropoff arrival title */
 "ai.rideos.driver.online.confirm-dropoff-arrival.title" = "Confirm Arrival at Drop-off Spot";
 
@@ -64,8 +73,14 @@
 /* Drive to dropoff title */
 "ai.rideos.driver.online.drive-to-dropoff.title" = "Drive to Drop-off Spot";
 
+/* Drive to dropoff passenger text format */
+"ai.rideos.driver.online.drive-to-dropoff.passenger-text-format" = "Drop off %@";
+
 /* Drive to pickup title */
 "ai.rideos.driver.online.drive-to-pickup.title" = "Drive to Pickup Spot";
+
+/* Drive to pickup passenger text format */
+"ai.rideos.driver.online.drive-to-pickup.passenger-text-format" = "Pick up %@";
 
 /* Start Driver Account Registration Button title */
 "ai.rideos.driver.vehicle-unregistered.register-vehicle-button.title" = "Start Registration";
@@ -77,7 +92,7 @@
 "ai.rideos.driver.offline.go-online-button.title" = "Go Online";
 
 /* Confirm pickup passenger(s) button title */
-"ai.rideos.driver.online.waiting-for-pickup.button.title" = "Confirm Pickup";
+"ai.rideos.driver.online.waiting-for-pickup.button.title" = "Confirm Passenger Pickup";
 
 /* Start navigation button title */
 "ai.rideos.driver.online.start-navigation-button.title" = "Start Navigation";
@@ -89,7 +104,7 @@
 "ai.rideos.driver.online.idle.status-text" = "Waiting for a Ride Request";
 
 /* Number of passengers to pickup string format */
-"ai.rideos.driver.online.waiting-for-pickup.title-format" = "Picking up %@";
+"ai.rideos.driver.online.waiting-for-pickup.title-format" = "Pick up %@";
 
 /* Go Online failure alert title */
 "ai.rideos.driver.offline.go-online-failed-alert.title" = "Something Went Wrong";
@@ -132,3 +147,60 @@
 
 /* Confirm Pickup failure alert OK action */
 "ai.rideos.driver.online.confirm-pickup-failed-alert.action.ok" = "OK";
+
+/* Trip Details view controller title */
+"ai.rideos.driver.trip-details.view-controller.title" = "Trip details";
+
+/* Trip Details done dialog action */
+"ai.rideos.driver.trip-details.dialog.action.done" = "Done";
+
+/* Trip Details passenger table cell label */
+"ai.rideos.driver.trip-details.passenger-cell.label" = "Passenger";
+
+/* Trip Details pickup location table cell label */
+"ai.rideos.driver.trip-details.pickup-location-cell.label" = "Pickup";
+
+/* Trip Details drop-off location table cell label */
+"ai.rideos.driver.trip-details.drop-off-location-cell.label" = "Drop-off";
+
+/* Trip Details reject trip action */
+"ai.rideos.driver.trip-details.action.reject-trip" = "Reject Trip";
+
+/* Trip Details reject trip confirmation alert title */
+"ai.rideos.driver.trip-details.confirm-reject-trip-alert.title" = "Decline Ride Request";
+
+/* Trip Details reject trip confirmation alert message */
+"ai.rideos.driver.trip-details.confirm-reject-trip-alert.message" = "Are you sure? This will cause a delay in passenger pickup time.";
+
+/* Trip Details reject trip confirmation alert confirm action title */
+"ai.rideos.driver.trip-details.confirm-reject-trip-alert.confirm.title" = "Yes, decline";
+
+/* Trip Details cancel trip action */
+"ai.rideos.driver.trip-details.action.cancel-trip" = "Cancel Trip";
+
+/* Trip Details cancel trip confirmation alert title */
+"ai.rideos.driver.trip-details.confirm-cancel-trip-alert.title" = "Cancel Trip";
+
+/* Trip Details cancel trip confirmation alert message */
+"ai.rideos.driver.trip-details.confirm-cancel-trip-alert.message" = "Are you sure? This will end the current trip.";
+
+/* Trip Details cancel trip confirmation alert confirm action title */
+"ai.rideos.driver.trip-details.confirm-cancel-trip-alert.confirm.title" = "Yes, cancel";
+
+/* Trip Details end trip action */
+"ai.rideos.driver.trip-details.action.end-trip" = "End Trip";
+
+/* Trip Details end trip confirmation alert title */
+"ai.rideos.driver.trip-details.confirm-end-trip-alert.title" = "End Trip";
+
+/* Trip Details end trip confirmation alert message */
+"ai.rideos.driver.trip-details.confirm-end-trip-alert.message" = "Are you sure? This will end the current trip.";
+
+/* Trip Details end trip confirmation alert confirm action title */
+"ai.rideos.driver.trip-details.confirm-end-trip-alert.confirm.title" = "Yes, end trip";
+
+/* Trip Details trip action confirmation alert cancel action title */
+"ai.rideos.driver.trip-details.confirm-trip-action-alert.cancel.title" = "No";
+
+/* Turn-by-turn navigation controller exit navigation button title */
+"ai.rideos.driver.turn-by-turn-navigation.exit-navigation.title" = "Exit Navigation";

@@ -22,15 +22,35 @@ public class DrivingToDropoffViewController: MatchedToVehicleViewController {
         fatalError("DrivingToDropoffViewController does not support NSCoder")
     }
 
-    public init(mapViewController: MapViewController,
-                initialPassengerState: RiderTripStateModel,
-                cancelListener: @escaping () -> Void,
-                schedulerProvider: SchedulerProvider = DefaultSchedulerProvider()) {
-        super.init(dialogView: AfterPickupDialog(),
+    public init(
+        mapViewController: MapViewController,
+        initialPassengerState: RiderTripStateModel,
+        cancelListener: @escaping () -> Void,
+        editDropoffListener: @escaping () -> Void,
+        schedulerProvider: SchedulerProvider = DefaultSchedulerProvider(),
+        enableDestinationEdits: Bool = DrivingToDropoffViewController.defaultEnableDestinationEdits()
+    ) {
+        super.init(dialogView: MatchedToVehicleDialog(cancelButtonTitle: nil,
+                                                      showEditPickupButton: false,
+                                                      showEditDropoffButton: enableDestinationEdits),
                    mapViewController: mapViewController,
                    viewModel: DefaultDrivingToDropoffViewModel(initialPassengerState: initialPassengerState,
                                                                currentDateProvider: { Date() }),
                    cancelListener: cancelListener,
+                   editPickupListener: nil,
+                   editDropoffListener: editDropoffListener,
                    schedulerProvider: schedulerProvider)
+    }
+
+    public static func defaultEnableDestinationEdits() -> Bool {
+        guard let info = Bundle.main.infoDictionary else {
+            fatalError("Can't load Info.plist")
+        }
+
+        guard let enableDestinationEdits = info["EnableEditingDestinationAfterPickup"] as? Bool else {
+            return true
+        }
+
+        return enableDestinationEdits
     }
 }

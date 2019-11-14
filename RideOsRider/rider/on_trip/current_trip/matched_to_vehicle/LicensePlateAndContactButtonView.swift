@@ -18,6 +18,17 @@ import RideOsCommon
 import RxCocoa
 
 public class LicensePlateAndContactButtonView: UIView {
+    public enum ContactButtonStyle {
+        case hidden
+        case phone
+        case chatBubble
+    }
+
+    private static let contactButtonStyleToImage = [
+        ContactButtonStyle.phone: RiderImages.phone(),
+        ContactButtonStyle.chatBubble: RiderImages.chatBubble(),
+    ]
+
     private let contactButton = LicensePlateAndContactButtonView.contactButton()
     private let licensePlateIconAndLabel = LicensePlateAndContactButtonView.licensePlateIconAndLabel()
 
@@ -30,12 +41,15 @@ public class LicensePlateAndContactButtonView: UIView {
         }
     }
 
-    public var isShowingContactButton: Bool {
-        get {
-            return !contactButton.isHidden
-        }
-        set {
-            contactButton.isHidden = !newValue
+    public var contactButtonStyle: ContactButtonStyle = .hidden {
+        didSet {
+            if contactButtonStyle == .hidden {
+                contactButton.isHidden = true
+            } else {
+                contactButton.isHidden = false
+                contactButton.setImage(LicensePlateAndContactButtonView.contactButtonStyleToImage[contactButtonStyle],
+                                       for: .normal)
+            }
         }
     }
 
@@ -60,7 +74,7 @@ public class LicensePlateAndContactButtonView: UIView {
 extension LicensePlateAndContactButtonView {
     private static func contactButton() -> UIButton {
         let button = UIButton(type: .custom)
-        button.setImage(RiderImages.chatBubble(), for: .normal)
+        button.setImage(LicensePlateAndContactButtonView.contactButtonStyleToImage[.phone], for: .normal)
         button.contentHorizontalAlignment = .right
         return button
     }
@@ -69,6 +83,7 @@ extension LicensePlateAndContactButtonView {
         let licensePlateIconAndLabel = IconLabelView(isCentered: false)
         licensePlateIconAndLabel.icon.image = RiderImages.carFront()
         licensePlateIconAndLabel.label.font = UIFont.systemFont(ofSize: 17, weight: .medium)
+        licensePlateIconAndLabel.label.textColor = .black
         return licensePlateIconAndLabel
     }
 }

@@ -2,8 +2,8 @@ platform :ios, '11.0'
 use_frameworks!
 
 target 'ExampleDriverApp' do
-  pod 'RideOsDriver', '~> 0.1'
-  pod 'RideOsApi', '~> 0.1'
-  pod 'RideOsGoogleMaps', '~> 0.1'
-  pod 'RideOsCommon', '~> 0.1'
+  pod 'RideOsCommon', :git => 'https://github.com/rideOS/rideos-sdk-ios.git', :tag => '0.3.0'
+  pod 'RideOsDriver', :git => 'https://github.com/rideOS/rideos-sdk-ios.git', :tag => '0.3.0'
+  pod 'RideOsGoogleMaps', :git => 'https://github.com/rideOS/rideos-sdk-ios.git', :tag => '0.3.0'
+  pod 'RideOsApi', :git => 'https://github.com/rideOS/rideos-api-ios.git', :tag => '0.1.2'
 end

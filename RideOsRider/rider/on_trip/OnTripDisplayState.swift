@@ -18,6 +18,14 @@ import RideOsCommon
 
 public enum OnTripDisplayState: Equatable {
     case currentTrip
-    case editingPickup
+    case editingPickup(
+        existingPickupLocation: DesiredAndAssignedLocation,
+        existingDropoffLocation: DesiredAndAssignedLocation
+    )
+    case editingDropoff(
+        existingPickupLocation: DesiredAndAssignedLocation,
+        existingDropoffLocation: DesiredAndAssignedLocation
+    )
     case updatingPickup(newPickupLocation: DesiredAndAssignedLocation)
+    case updatingDropoff(newDropoffLocation: DesiredAndAssignedLocation)
 }

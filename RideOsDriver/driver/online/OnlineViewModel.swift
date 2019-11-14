@@ -17,5 +17,7 @@ import Foundation
 import RxSwift
 
 public protocol OnlineViewModel: GoOfflineListener {
-    func getOnlineViewState() -> Observable<OnlineViewState>
+    var onlineViewState: Observable<OnlineViewState> { get }
+    func openTripDetails()
+    func closeTripDetails()
 }

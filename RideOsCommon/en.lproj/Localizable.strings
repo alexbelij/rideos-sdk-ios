@@ -46,8 +46,11 @@
 /* Active fleet selector title */
 "ai.rideos.common.settings.developer.fleet-selector" = "Pick a fleet for dispatch";
 
-/* Preferred name string */
+/* Edit Profile preferred name section header */
 "ai.rideos.common.settings.account.preferred-name" = "PREFERRED NAME";
+
+/* Edit Profile phone number section header */
+"ai.rideos.common.settings.account.phone-number" = "PHONE NUMBER";
 
 /* Production environment name */
 "ai.rideos.common.settings.developer.environment.production" = "Production";

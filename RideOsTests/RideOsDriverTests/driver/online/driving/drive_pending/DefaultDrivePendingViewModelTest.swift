@@ -7,53 +7,68 @@ import XCTest
 
 class DefaultDrivePendingViewModelTest: ReactiveTestCase {
     private static let destination = CLLocationCoordinate2D(latitude: 42, longitude: 42)
-    private static let deviceLocation = CLLocation(latitude: 1, longitude: 1)
-
-    private static let detailTextProvider: DefaultDrivePendingViewModel.RouteDetailTextProvider = {
-        "distance: \($0), travel_time: \($1)"
+    private static let contactInfo = ContactInfo(name: "test_name")
+    private static let tripResourceInfo = TripResourceInfo(numberOfPassengers: 1, contactInfo: contactInfo)
+    private static let action = VehiclePlanAction(destination: destination,
+                                                  actionType: .driveToDropoff,
+                                                  tripResourceInfo: tripResourceInfo)
+    private static let destinationWaypoint = VehiclePlan.Waypoint(taskId: "test_task_id",
+                                                                  stepIds: [""],
+                                                                  action: action)
+    private static let passengerTextProvider: TripResourceInfo.PassengerTextProvider = {
+        "requester_name: \($0.contactInfo.name!), number_of_passengers: \($0.numberOfPassengers)"
     }
-
-    private static let style = DefaultDrivePendingViewModel.Style(routeDetailTextProvider: detailTextProvider,
+    private static let style = DefaultDrivePendingViewModel.Style(passengerTextProvider: passengerTextProvider,
                                                                   drawablePathWidth: 2.0,
                                                                   drawablePathColor: .green,
                                                                   destinationIcon: DrawableMarkerIcons.pickupPin())
-
+    private static let deviceLocation = CLLocation(latitude: 1, longitude: 1)
+    
     private var viewModelUnderTest: DefaultDrivePendingViewModel!
-    private var routeDetailTextRecorder: TestableObserver<String>!
+    private var addressTextRecorder: TestableObserver<String>!
     private var mapStateProviderRecorder: MapStateProviderRecorder!
 
     override func setUp() {
         super.setUp()
 
-        let destination = DefaultDrivePendingViewModelTest.destination
+        let destinationWaypoint = DefaultDrivePendingViewModelTest.destinationWaypoint
         let deviceLocator = FixedDeviceLocator(deviceLocation: DefaultDrivePendingViewModelTest.deviceLocation)
         let style = DefaultDrivePendingViewModelTest.style
         let routeInteractor = PointToPointRouteInteractor(scheduler: scheduler)
+        let geocodeInteractor = EchoGeocodeInteractor(scheduler: scheduler)
         let schedulerProvider = TestSchedulerProvider(scheduler: scheduler)
 
-        viewModelUnderTest = DefaultDrivePendingViewModel(destination: destination,
+        viewModelUnderTest = DefaultDrivePendingViewModel(destinationWaypoint: destinationWaypoint,
                                                           style: style,
                                                           deviceLocator: deviceLocator,
                                                           routeInteractor: routeInteractor,
-                                                          schedulerProvider: schedulerProvider)
+                                                          geocodeInteractor: geocodeInteractor,
+                                                          schedulerProvider: schedulerProvider,
+                                                          logger: ConsoleLogger())
 
-        routeDetailTextRecorder = scheduler.record(viewModelUnderTest.routeDetailText)
+        addressTextRecorder = scheduler.record(viewModelUnderTest.addressText)
 
         mapStateProviderRecorder = MapStateProviderRecorder(mapStateProvider: viewModelUnderTest, scheduler: scheduler)
 
         assertNil(viewModelUnderTest, after: { self.viewModelUnderTest = nil })
     }
+    
+    func testViewModelReflectsExpectedPassengerText() {
+        let expectedPassengerText = DefaultDrivePendingViewModelTest.passengerTextProvider(
+            DefaultDrivePendingViewModelTest.tripResourceInfo
+        )
+        
+        XCTAssertEqual(viewModelUnderTest.passengersText, expectedPassengerText)
+    }
 
-    func testViewModelReflectsExpectedRouteDetailText() {
-        let expectedRouteDetailText =
-            DefaultDrivePendingViewModelTest.detailTextProvider(PointToPointRouteInteractor.travelDistanceMeters,
-                                                                PointToPointRouteInteractor.travelTime)
+    func testViewModelReflectsExpectedAddressText() {
+        let expectedRouteDetailText = EchoGeocodeInteractor.displayName
 
         scheduler.start()
 
-        XCTAssertEqual(routeDetailTextRecorder.events, [
-            next(3, expectedRouteDetailText),
-            completed(4),
+        XCTAssertEqual(addressTextRecorder.events, [
+            next(1, expectedRouteDetailText),
+            completed(2),
         ])
     }
 

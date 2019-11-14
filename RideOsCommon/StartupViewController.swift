@@ -95,29 +95,31 @@ open class StartupViewController: UIViewController, AuthenticatedViewControllerD
     }
 
     private func displayViewController(_ newController: UIViewController) {
-        if let activeViewController = visibleViewController {
-            activeViewController.willMove(toParent: nil)
+        DispatchQueue.main.async {
+            if let activeViewController = self.visibleViewController {
+                activeViewController.willMove(toParent: nil)
+            }
+
+            self.addChild(newController)
+            newController.view.frame = self.view.frame
+
+            if let activeViewController = self.visibleViewController {
+                // Transition with animation
+                self.transition(from: activeViewController, to: newController,
+                                duration: self.viewTransitionAnimationDuration,
+                                options: .transitionCrossDissolve,
+                                animations: nil,
+                                completion: { _ in
+                                    activeViewController.removeFromParent()
+                                    newController.didMove(toParent: self)
+                })
+            } else {
+                self.view.addSubview(newController.view)
+                newController.didMove(toParent: self)
+            }
+
+            self.visibleViewController = newController
         }
-
-        addChild(newController)
-        newController.view.frame = view.frame
-
-        if let activeViewController = visibleViewController {
-            // Transition with animation
-            transition(from: activeViewController, to: newController,
-                       duration: viewTransitionAnimationDuration,
-                       options: .transitionCrossDissolve,
-                       animations: nil,
-                       completion: { _ in
-                           activeViewController.removeFromParent()
-                           newController.didMove(toParent: self)
-            })
-        } else {
-            view.addSubview(newController.view)
-            newController.didMove(toParent: self)
-        }
-
-        visibleViewController = newController
     }
 
     func presentLogin() {
@@ -171,9 +173,11 @@ open class StartupViewController: UIViewController, AuthenticatedViewControllerD
     }
 
     func presentMainView(_ userId: String) {
-        let mainViewController = createMainViewController(userId)
-        mainViewController.delegate = self
-        displayViewController(mainViewController)
+        DispatchQueue.main.async {
+            let mainViewController = self.createMainViewController(userId)
+            mainViewController.delegate = self
+            self.displayViewController(mainViewController)
+        }
     }
 
     // MARK: AuthenticatedViewControllerDelegate

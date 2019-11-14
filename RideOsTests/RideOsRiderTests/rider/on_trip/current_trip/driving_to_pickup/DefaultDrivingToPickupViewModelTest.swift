@@ -122,7 +122,9 @@ class DefaultDrivingToPickupViewModelTest: ReactiveTestCase {
                 MatchedToVehicleStatusModel(
                     status: expectedEtaPrefix + String.minutesLabelWith(timeInterval: route.travelTime),
                     nextWaypoint: pickup.displayName,
-                    vehicleInfo: vehicleInfo
+                    vehicleInfo: vehicleInfo,
+                    pickupLabel: pickup.displayName,
+                    dropoffLabel: dropoff.displayName
                 )
             )
         ])
@@ -185,7 +187,9 @@ class DefaultDrivingToPickupViewModelTest: ReactiveTestCase {
                 MatchedToVehicleStatusModel(
                     status: expectedEtaPrefix + String.minutesLabelWith(timeInterval: route.travelTime),
                     nextWaypoint: pickup.displayName,
-                    vehicleInfo: vehicleInfo
+                    vehicleInfo: vehicleInfo,
+                    pickupLabel: pickup.displayName,
+                    dropoffLabel: dropoff.displayName
                 )
             ),
             .next(
@@ -196,7 +200,9 @@ class DefaultDrivingToPickupViewModelTest: ReactiveTestCase {
                         + expectedEtaPrefix
                         + String.minutesLabelWith(timeInterval: route1.travelTime),
                     nextWaypoint: pickup1.displayName,
-                    vehicleInfo: vehicleInfo1
+                    vehicleInfo: vehicleInfo1,
+                    pickupLabel: pickup1.displayName,
+                    dropoffLabel: dropoff1.displayName
                 )
             )
         ])
@@ -214,7 +220,7 @@ class DefaultDrivingToPickupViewModelTest: ReactiveTestCase {
     func testViewModelProducesExpectedDialogModelWithOneWaypointBeforePickup() {
         setUp(initialPassengerState: passengerStateModels[2])
         guard case RiderTripStateModel.drivingToPickup(let pickup,
-                                                       _,
+                                                       let dropoff,
                                                        let route,
                                                        _,
                                                        let vehicleInfo,
@@ -230,7 +236,9 @@ class DefaultDrivingToPickupViewModelTest: ReactiveTestCase {
                         + expectedEtaPrefix
                         + String.minutesLabelWith(timeInterval: route.travelTime),
                     nextWaypoint: pickup.displayName,
-                    vehicleInfo: vehicleInfo
+                    vehicleInfo: vehicleInfo,
+                    pickupLabel: pickup.displayName,
+                    dropoffLabel: dropoff.displayName
                 )
             )
         ])

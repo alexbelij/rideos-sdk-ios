@@ -1,4 +1,4 @@
-// MARK: - Mocks generated from file: ../RideOsCommon/geo/PolylineSimplifier.swift at 2019-10-16 18:06:52 +0000
+// MARK: - Mocks generated from file: ../RideOsCommon/geo/PolylineSimplifier.swift at 2019-11-12 23:23:21 +0000
 
 // Copyright 2019 rideOS, Inc.
 //

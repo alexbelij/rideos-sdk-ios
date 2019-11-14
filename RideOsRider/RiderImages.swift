@@ -48,6 +48,10 @@ public class RiderImages {
         return RideOsRiderResourceLoader.instance.getImage("ai.rideos.rider.chat-bubble")
     }
 
+    public static func phone() -> UIImage {
+        return RideOsRiderResourceLoader.instance.getImage("ai.rideos.rider.phone")
+    }
+
     public static func carFront() -> UIImage {
         return RideOsRiderResourceLoader.instance.getImage("ai.rideos.rider.car")
     }
@@ -70,5 +74,9 @@ public class RiderImages {
 
     public static func blackPinWithStar() -> UIImage {
         return RideOsRiderResourceLoader.instance.getImage("ai.rideos.rider.black-pin-star")
+    }
+
+    public static func drawerHandle() -> UIImage {
+        return RideOsRiderResourceLoader.instance.getImage("ai.rideos.rider.drawer.handle")
     }
 }

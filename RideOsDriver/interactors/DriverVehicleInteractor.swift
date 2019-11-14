@@ -16,6 +16,7 @@
 import CoreLocation
 import Foundation
 import RideOsApi
+import RideOsCommon
 import RxSwift
 
 public protocol DriverVehicleInteractor {
@@ -23,6 +24,8 @@ public protocol DriverVehicleInteractor {
     func markVehicleReady(vehicleId: String) -> Completable
     func markVehicleNotReady(vehicleId: String) -> Completable
     func finishSteps(vehicleId: String, taskId: String, stepIds: [String]) -> Completable
+    func rejectTrip(vehicleId: String, tripId: String) -> Completable
+    func cancelTrip(tripId: String) -> Completable
     func getVehicleStatus(vehicleId: String) -> Single<VehicleStatus>
     func getVehicleState(vehicleId: String) -> Single<RideHailCommonsVehicleState>
     func updateVehiclePose(
@@ -34,6 +37,9 @@ public protocol DriverVehicleInteractor {
         vehicleId: String,
         legs: [RideHailDriverUpdateVehicleStateRequest_SetRouteLegs_LegDefinition]
     ) -> Completable
+    func updateContactInfo(vehicleId: String, contactInfo: ContactInfo) -> Completable
+    func updateLicensePlate(vehicleId: String, licensePlate: String) -> Completable
+    func getVehicleInfo(vehicleId: String) -> Single<VehicleInfo>
 }
 
 public enum DriverVehicleInteractorError: Error {

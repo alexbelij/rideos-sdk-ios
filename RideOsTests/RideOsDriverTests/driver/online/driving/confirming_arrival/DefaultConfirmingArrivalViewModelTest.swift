@@ -7,22 +7,29 @@ import XCTest
 
 class DefaultConfirmingArrivalViewModelTest: ReactiveTestCase {
     private static let destination = CLLocationCoordinate2D(latitude: 42, longitude: 42)
+    private static let contactInfo = ContactInfo(name: "test_name")
+    private static let tripResourceInfo = TripResourceInfo(numberOfPassengers: 1, contactInfo: contactInfo)
     private static let action = VehiclePlanAction(destination: destination,
                                                   actionType: .driveToDropoff,
-                                                  tripResourceInfo: TripResourceInfo(numberOfPassengers: 1,
-                                                                                     nameOfTripRequester: ""))
+                                                  tripResourceInfo: tripResourceInfo)
     private static let destinationWaypoint = VehiclePlan.Waypoint(taskId: "test_task_id",
                                                                   stepIds: [""],
                                                                   action: action)
+    private static let passengerTextProvider: TripResourceInfo.PassengerTextProvider = {
+        "requester_name: \($0.contactInfo.name!), number_of_passengers: \($0.numberOfPassengers)"
+    }
+    private static let style = DefaultConfirmingArrivalViewModel.Style(
+        passengerTextProvider: passengerTextProvider,
+        destinationIcon:  DrawableMarkerIcons.pickupPin(),
+        vehicleIcon: DrawableMarkerIcons.car()
+    )
     private static let deviceLocation = CLLocation(latitude: 1, longitude: 1)
-    private static let destinationPin = DrawableMarkerIcons.pickupPin()
-    private static let style = DefaultConfirmingArrivalViewModel.Style(destinationIcon: destinationPin,
-                                                                       vehicleIcon: DrawableMarkerIcons.car())
+
 
     private var echoGeocodeInteractor: EchoGeocodeInteractor!
     private var recordingDriverVehicleInteractor: FixedDriverVehicleInteractor!
     private var viewModelUnderTest: DefaultConfirmingArrivalViewModel!
-    private var detailTextRecorder: TestableObserver<String>!
+    private var addressTextRecorder: TestableObserver<String>!
     private var mapStateProviderRecorder: MapStateProviderRecorder!
     private var stateRecorder: TestableObserver<ConfirmingArrivalViewState>!
     
@@ -45,7 +52,7 @@ class DefaultConfirmingArrivalViewModelTest: ReactiveTestCase {
                 logger: ConsoleLogger()
         )
 
-        detailTextRecorder = scheduler.record(viewModelUnderTest.arrivalDetailText)
+        addressTextRecorder = scheduler.record(viewModelUnderTest.addressText)
 
         mapStateProviderRecorder = MapStateProviderRecorder(mapStateProvider: viewModelUnderTest, scheduler: scheduler)
         stateRecorder = scheduler.record(viewModelUnderTest.confirmingArrivalState)
@@ -53,15 +60,25 @@ class DefaultConfirmingArrivalViewModelTest: ReactiveTestCase {
         assertNil(viewModelUnderTest, after: { self.viewModelUnderTest = nil })
     }
 
-    func testViewModelReflectsExpectedDetailText() {
+    func testViewModelReflectsExpectedPassengerText() {
+        setUp(finishStepsError: nil)
+        
+        let expectedPassengerText = DefaultConfirmingArrivalViewModelTest.passengerTextProvider(
+            DefaultConfirmingArrivalViewModelTest.tripResourceInfo
+        )
+
+        XCTAssertEqual(viewModelUnderTest.passengersText, expectedPassengerText)
+    }
+    
+    func testViewModelReflectsExpectedAddressText() {
         setUp(finishStepsError: nil)
         
         scheduler.start()
-
-        XCTAssertEqual(detailTextRecorder.events, [
+        
+        XCTAssertEqual(addressTextRecorder.events, [
             next(1, EchoGeocodeInteractor.displayName),
             completed(2),
-        ])
+            ])
     }
     
     func testViewModelReflectsExpectedInitialState() {

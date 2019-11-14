@@ -84,7 +84,37 @@ public class DefaultCurrentTripViewModel: CurrentTripViewModel {
     }
 
     public func editPickup() {
-        listener?.editPickup()
+        guard let tripState = latestRiderTripState else {
+            return
+        }
+        listener?.editPickup(
+            // TODO(chrism): This isn't totally correct since the pickup/dropoff locations are actually
+            // the assigned locations. Unfortunately, until we plumb both desired and assigned locations
+            // through the backend, this is the best we can do
+            existingPickupLocation: DesiredAndAssignedLocation(
+                desiredLocation: NamedTripLocation(geocodedLocation: tripState.pickupLocation)
+            ),
+            existingDropoffLocation: DesiredAndAssignedLocation(
+                desiredLocation: NamedTripLocation(geocodedLocation: tripState.dropoffLocation)
+            )
+        )
+    }
+
+    public func editDropoff() {
+        guard let tripState = latestRiderTripState else {
+            return
+        }
+        listener?.editDropoff(
+            // TODO(chrism): This isn't totally correct since the pickup/dropoff locations are actually
+            // the assigned locations. Unfortunately, until we plumb both desired and assigned locations
+            // through the backend, this is the best we can do
+            existingPickupLocation: DesiredAndAssignedLocation(
+                desiredLocation: NamedTripLocation(geocodedLocation: tripState.pickupLocation)
+            ),
+            existingDropoffLocation: DesiredAndAssignedLocation(
+                desiredLocation: NamedTripLocation(geocodedLocation: tripState.dropoffLocation)
+            )
+        )
     }
 
     public func encodedState(_ encoder: JSONEncoder) -> Data? {

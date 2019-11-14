@@ -17,10 +17,23 @@ import CoreLocation
 import Foundation
 
 public struct DrivingViewState: Equatable {
-    public enum Step {
+    public enum Step: Equatable {
         case drivePending
         case navigating
-        case confirmingArrival
+        case confirmingArrival(showBackToNavigation: Bool)
+
+        public static func == (lhs: Step, rhs: Step) -> Bool {
+            switch (lhs, rhs) {
+            case (.drivePending, .drivePending):
+                return true
+            case (.navigating, .navigating):
+                return true
+            case let (.confirmingArrival(lhsShowBackToNavigation), .confirmingArrival(rhsShowBackToNavigation)):
+                return lhsShowBackToNavigation == rhsShowBackToNavigation
+            default:
+                return false
+            }
+        }
     }
 
     let drivingStep: Step

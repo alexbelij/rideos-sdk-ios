@@ -17,17 +17,17 @@ import Foundation
 
 public struct PreTripLocation: Equatable {
     public let desiredAndAssignedLocation: DesiredAndAssignedLocation
-    public let wasSetOnMap: Bool
+    public let wasConfirmed: Bool
 
-    public init(desiredAndAssignedLocation: DesiredAndAssignedLocation, wasSetOnMap: Bool) {
+    public init(desiredAndAssignedLocation: DesiredAndAssignedLocation, wasConfirmed: Bool) {
         self.desiredAndAssignedLocation = desiredAndAssignedLocation
-        self.wasSetOnMap = wasSetOnMap
+        self.wasConfirmed = wasConfirmed
     }
 
-    public init?(desiredAndAssignedLocation: DesiredAndAssignedLocation?, wasSetOnMap: Bool = false) {
+    public init?(desiredAndAssignedLocation: DesiredAndAssignedLocation?, wasConfirmed: Bool = false) {
         if let desiredAndAssignedLocation = desiredAndAssignedLocation {
             self.desiredAndAssignedLocation = desiredAndAssignedLocation
-            self.wasSetOnMap = wasSetOnMap
+            self.wasConfirmed = wasConfirmed
         } else {
             return nil
         }

@@ -20,6 +20,7 @@ import RxSwift
 public protocol CurrentTripViewModel: EncodedStateProvider {
     func cancelTrip()
     func editPickup()
+    func editDropoff()
 
     var riderTripState: Observable<RiderTripStateModel> { get }
 }

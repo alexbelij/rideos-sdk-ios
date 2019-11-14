@@ -1,6 +1,8 @@
 platform :ios, '11.0'
 use_frameworks!
 
+pod 'RideOsApi', :git => 'https://github.com/rideOS/rideos-api-ios.git', :tag => '0.1.2'
+
 pod 'SwiftFormat/CLI', '0.40'
 pod 'SwiftLint', '0.32.0'
 

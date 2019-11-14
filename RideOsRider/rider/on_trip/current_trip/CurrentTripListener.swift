@@ -17,5 +17,8 @@ import CoreLocation
 import Foundation
 
 public protocol CurrentTripListener: class {
-    func editPickup()
+    func editPickup(existingPickupLocation: DesiredAndAssignedLocation,
+                    existingDropoffLocation: DesiredAndAssignedLocation)
+    func editDropoff(existingPickupLocation: DesiredAndAssignedLocation,
+                     existingDropoffLocation: DesiredAndAssignedLocation)
 }

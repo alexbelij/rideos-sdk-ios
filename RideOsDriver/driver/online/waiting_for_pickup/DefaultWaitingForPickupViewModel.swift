@@ -17,46 +17,43 @@ import CoreLocation
 import Foundation
 import RideOsCommon
 import RxSwift
+import RxSwiftExt
 
 public class DefaultWaitingForPickupViewModel: WaitingForPickupViewModel {
-    public typealias PassengerPickupTextProvider = (TripResourceInfo) -> String
+    private static let geocodeRepeatBehavior = RepeatBehavior.immediate(maxCount: 2)
 
     public struct Style {
-        public static let defaultPassengerPickupTextProvider: PassengerPickupTextProvider = { tripResourceInfo in
-            let passengersToPickupText: String
-
-            if tripResourceInfo.numberOfPassengers > 1 {
-                let numberOfRidersExcludingRequester = tripResourceInfo.numberOfPassengers - 1
-                passengersToPickupText = "\(tripResourceInfo.nameOfTripRequester) + \(numberOfRidersExcludingRequester)"
-            } else {
-                passengersToPickupText = tripResourceInfo.nameOfTripRequester
-            }
-
-            let passengerPickupTextFormat = RideOsDriverResourceLoader.instance.getString(
-                "ai.rideos.driver.online.waiting-for-pickup.title-format"
+        public static let defaultPassengerTextProvider: TripResourceInfo.PassengerTextProvider = { tripResourceInfo in
+            String(
+                format: RideOsDriverResourceLoader.instance.getString(
+                    "ai.rideos.driver.online.waiting-for-pickup.title-format"
+                ),
+                TripResourceInfo.defaultPassengerTextProvider(tripResourceInfo)
             )
-
-            return String(format: passengerPickupTextFormat, passengersToPickupText)
         }
 
-        public let passengerPickupTextProvider: PassengerPickupTextProvider
+        public let passengerTextProvider: TripResourceInfo.PassengerTextProvider
         public let pickupLocationIcon: DrawableMarkerIcon
         public let vehicleIcon: DrawableMarkerIcon
 
         public init(
-            passengerPickupTextProvider: @escaping PassengerPickupTextProvider =
-                Style.defaultPassengerPickupTextProvider,
+            passengerTextProvider: @escaping TripResourceInfo.PassengerTextProvider =
+                Style.defaultPassengerTextProvider,
             pickupLocationIcon: DrawableMarkerIcon = DrawableMarkerIcons.pickupPin(),
             vehicleIcon: DrawableMarkerIcon = DrawableMarkerIcons.car()
         ) {
-            self.passengerPickupTextProvider = passengerPickupTextProvider
+            self.passengerTextProvider = passengerTextProvider
             self.pickupLocationIcon = pickupLocationIcon
             self.vehicleIcon = vehicleIcon
         }
     }
 
-    public var passengersToPickupText: String {
-        return style.passengerPickupTextProvider(tripResourceInfo)
+    public var passengersText: String {
+        return style.passengerTextProvider(tripResourceInfo)
+    }
+
+    public var addressText: Observable<String> {
+        return reverseGeocodeObservable().map { $0.displayName }
     }
 
     public var confirmingPickupState: Observable<ConfirmingPickupViewState> {
@@ -66,6 +63,7 @@ public class DefaultWaitingForPickupViewModel: WaitingForPickupViewModel {
     private let tripResourceInfo: TripResourceInfo
     private let pickupWaypoint: VehiclePlan.Waypoint
     private let driverVehicleInteractor: DriverVehicleInteractor
+    private let geocodeInteractor: GeocodeInteractor
     private let userStorageReader: UserStorageReader
     private let deviceLocator: DeviceLocator
     private let style: Style
@@ -76,6 +74,8 @@ public class DefaultWaitingForPickupViewModel: WaitingForPickupViewModel {
 
     public init(pickupWaypoint: VehiclePlan.Waypoint,
                 driverVehicleInteractor: DriverVehicleInteractor = DefaultDriverVehicleInteractor(),
+                geocodeInteractor: GeocodeInteractor =
+                    DriverDependencyRegistry.instance.mapsDependencyFactory.geocodeInteractor,
                 userStorageReader: UserStorageReader = UserDefaultsUserStorageReader(),
                 deviceLocator: DeviceLocator = PotentiallySimulatedDeviceLocator(),
                 style: Style = Style(),
@@ -83,6 +83,7 @@ public class DefaultWaitingForPickupViewModel: WaitingForPickupViewModel {
                 logger: Logger = LoggerDependencyRegistry.instance.logger) {
         self.pickupWaypoint = pickupWaypoint
         self.driverVehicleInteractor = driverVehicleInteractor
+        self.geocodeInteractor = geocodeInteractor
         self.deviceLocator = deviceLocator
         self.userStorageReader = userStorageReader
         self.style = style
@@ -123,6 +124,16 @@ public class DefaultWaitingForPickupViewModel: WaitingForPickupViewModel {
         default:
             return
         }
+    }
+
+    private func reverseGeocodeObservable() -> Observable<GeocodedLocationModel> {
+        return geocodeInteractor.reverseGeocode(location: pickupWaypoint.action.destination, maxResults: 1)
+            .observeOn(schedulerProvider.computation())
+            .logErrors(logger: logger)
+            .retry(DefaultWaitingForPickupViewModel.geocodeRepeatBehavior)
+            .map { $0.first }
+            .filterNil()
+            .share(replay: 1)
     }
 }
 

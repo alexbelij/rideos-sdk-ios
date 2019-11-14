@@ -17,6 +17,6 @@ import CoreLocation
 import Foundation
 import RxSwift
 
-public protocol OnTripViewModel: CurrentTripListener, ConfirmLocationListener, TripFinishedListener {
+public protocol OnTripViewModel: CurrentTripListener, SetPickupDropoffListener, TripFinishedListener {
     var displayState: Observable<OnTripDisplayState> { get }
 }

@@ -27,4 +27,8 @@ public class DriverImages {
     public static func close() -> UIImage {
         return RideOsDriverResourceLoader.instance.getImage("ai.rideos.driver.close")
     }
+
+    public static func carFront() -> UIImage {
+        return RideOsDriverResourceLoader.instance.getImage("ai.rideos.driver.car-front")
+    }
 }

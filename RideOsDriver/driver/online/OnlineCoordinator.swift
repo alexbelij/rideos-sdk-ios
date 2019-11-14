@@ -22,6 +22,7 @@ public class OnlineCoordinator: Coordinator {
     private let disposeBag = DisposeBag()
 
     private let onlineViewModel: OnlineViewModel
+    private var drivingCoordinator: DrivingCoordinator
     private let mapViewController: MapViewController
     private let schedulerProvider: SchedulerProvider
 
@@ -42,11 +43,17 @@ public class OnlineCoordinator: Coordinator {
         self.mapViewController = mapViewController
         self.schedulerProvider = schedulerProvider
 
+        drivingCoordinator = DrivingCoordinator(
+            mapViewController: mapViewController,
+            openTripDetailsListener: { [onlineViewModel] in onlineViewModel.openTripDetails() },
+            navigationController: navigationController
+        )
+
         super.init(navigationController: navigationController)
     }
 
     public override func activate() {
-        onlineViewModel.getOnlineViewState()
+        onlineViewModel.onlineViewState
             .observeOn(schedulerProvider.mainThread())
             .subscribe(onNext: { [unowned self] onlineViewState in
                 switch onlineViewState {
@@ -58,6 +65,8 @@ public class OnlineCoordinator: Coordinator {
                     self.showWaitingForPassengers(waypoint: waypoint)
                 case let .drivingToDropoff(waypoint):
                     self.showDrivingToDropoff(waypoint: waypoint)
+                case let .tripDetails(plan):
+                    self.showTripDetails(plan: plan)
                 }
             })
             .disposed(by: disposeBag)
@@ -69,19 +78,30 @@ public class OnlineCoordinator: Coordinator {
     }
 
     private func showDrivingToPickup(waypoint: VehiclePlan.Waypoint) {
-        showChild(coordinator: DrivingCoordinator.forPickup(destinationWaypoint: waypoint,
-                                                            mapViewController: mapViewController,
-                                                            navigationController: navigationController))
+        DrivingCoordinator.startPickup(with: waypoint, coordinator: drivingCoordinator)
+
+        showChild(coordinator: drivingCoordinator)
     }
 
     private func showWaitingForPassengers(waypoint: VehiclePlan.Waypoint) {
+        let openTripDetailsListener = { [onlineViewModel] in onlineViewModel.openTripDetails() }
+
         showChild(viewController: WaitingForPickupViewController(pickupWaypoint: waypoint,
-                                                                 mapViewController: mapViewController))
+                                                                 mapViewController: mapViewController,
+                                                                 openTripDetailsListener: openTripDetailsListener))
     }
 
     private func showDrivingToDropoff(waypoint: VehiclePlan.Waypoint) {
-        showChild(coordinator: DrivingCoordinator.forDropoff(destinationWaypoint: waypoint,
-                                                             mapViewController: mapViewController,
-                                                             navigationController: navigationController))
+        DrivingCoordinator.startDropoff(with: waypoint, coordinator: drivingCoordinator)
+
+        showChild(coordinator: drivingCoordinator)
+    }
+
+    private func showTripDetails(plan: VehiclePlan) {
+        let onDismiss = { [onlineViewModel] in
+            onlineViewModel.closeTripDetails()
+        }
+
+        showChild(viewController: TripDetailsViewController(vehiclePlan: plan, onDismiss: onDismiss))
     }
 }

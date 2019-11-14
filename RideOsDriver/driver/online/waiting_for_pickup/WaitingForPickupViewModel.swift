@@ -18,7 +18,8 @@ import RideOsCommon
 import RxSwift
 
 public protocol WaitingForPickupViewModel: MapStateProvider {
-    var passengersToPickupText: String { get }
+    var passengersText: String { get }
+    var addressText: Observable<String> { get }
     var confirmingPickupState: Observable<ConfirmingPickupViewState> { get }
     func confirmPickup()
 }

@@ -17,19 +17,26 @@ import Foundation
 import RideOsCommon
 
 public struct SetPickupDropOffDisplayState: Equatable {
-    public enum Step {
-        case searchingForPickupDropoff
+    public enum Step: Equatable {
+        case searchingForPickupDropoff(enablePickupSearch: Bool, enableDropoffSearch: Bool)
         case settingPickupOnMap
         case settingDropoffOnMap
+        case confirmingPickup
+        case confirmingDropoff
     }
 
     public let step: Step
-    public let pickup: DesiredAndAssignedLocation?
-    public let dropoff: DesiredAndAssignedLocation?
+    public let pickup: PreTripLocation?
+    public let dropoff: PreTripLocation?
+    public let focus: LocationSearchFocusType
 
-    public init(step: Step, pickup: DesiredAndAssignedLocation?, dropoff: DesiredAndAssignedLocation?) {
+    public init(step: Step,
+                pickup: PreTripLocation?,
+                dropoff: PreTripLocation?,
+                focus: LocationSearchFocusType) {
         self.step = step
         self.pickup = pickup
         self.dropoff = dropoff
+        self.focus = focus
     }
 }

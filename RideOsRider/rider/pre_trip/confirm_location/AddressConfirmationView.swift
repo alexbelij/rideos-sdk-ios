@@ -64,6 +64,7 @@ extension AddressConfirmationView {
     private static func label() -> UILabel {
         let label = UILabel()
         label.font = UIFont.systemFont(ofSize: 18, weight: .medium)
+        label.textColor = .black
         return label
     }
 }

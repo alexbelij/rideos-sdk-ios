@@ -26,9 +26,11 @@ class DefaultLocationSearchViewModelTest: ReactiveTestCase {
     var isDoneActionEnabledRecorder: TestableObserver<Bool>!
     var listener: RecordingLocationSearchListener!
     var historicalSearchInteractor: MockHistoricalSearchInteractor!
+    var initialStateRecorder: TestableObserver<LocationSearchInitialState>!
     
     func setUp(initialPickup: GeocodedLocationModel?,
                initialDropoff: GeocodedLocationModel?,
+               initialFocus: LocationSearchFocusType,
                historicalSearchResults: [LocationAutocompleteResult] = []) {
         super.setUp()
         listener = RecordingLocationSearchListener()
@@ -48,8 +50,9 @@ class DefaultLocationSearchViewModelTest: ReactiveTestCase {
         viewModelUnderTest = DefaultLocationSearchViewModel(
             schedulerProvider: TestSchedulerProvider(scheduler: scheduler),
             listener: listener,
-            initialPickup: initialPickup,
-            initialDropoff: initialDropoff,
+            initialState: DefaultLocationSearchViewModelTest.initialState(initialPickup: initialPickup,
+                                                                          initialDropoff: initialDropoff,
+                                                                          initialFocus: initialFocus),
             searchBounds: DefaultLocationSearchViewModelTest.searchBounds,
             locationAutocompleteInteractor: FixedLocationAutocompleteInteractor(),
             deviceLocator: FixedDeviceLocator(deviceLocation: DefaultLocationSearchViewModelTest.deviceLocation),
@@ -81,57 +84,103 @@ class DefaultLocationSearchViewModelTest: ReactiveTestCase {
             .drive(isDoneActionEnabledRecorder)
             .disposed(by: disposeBag)
         
+        initialStateRecorder = scheduler.createObserver(LocationSearchInitialState.self)
+        viewModelUnderTest.initialState
+            .asDriver(onErrorJustReturn: LocationSearchInitialState(
+                pickupSearchBoxState: LocationSearchBoxState(location: nil, enabled: false),
+                dropoffSearchBoxState: LocationSearchBoxState(location: nil, enabled: false),
+                focus: .pickup))
+            .drive(initialStateRecorder)
+            .disposed(by: disposeBag)
+        
         assertNil(viewModelUnderTest, after: { self.viewModelUnderTest = nil })
     }
     
+    private static func initialState(initialPickup: GeocodedLocationModel?,
+                                     initialDropoff: GeocodedLocationModel?,
+                                     initialFocus: LocationSearchFocusType) -> LocationSearchInitialState {
+        return LocationSearchInitialState(
+            pickupSearchBoxState: LocationSearchBoxState(
+                location: initialPickup != nil ? NamedTripLocation(geocodedLocation: initialPickup!) : nil,
+                enabled: true
+            ),
+            dropoffSearchBoxState: LocationSearchBoxState(
+                location: initialDropoff != nil ? NamedTripLocation(geocodedLocation: initialDropoff!) : nil,
+                enabled: true
+            ),
+            focus: initialFocus
+        )
+    }
+    
     func testStateMatchesExpectationBeforeInteractionsWithNoInitialPickupOrDropoff() {
-        setUp(initialPickup: nil, initialDropoff: nil)
+        setUp(initialPickup: nil, initialDropoff: nil, initialFocus: .dropoff)
         scheduler.start()
         AssertRecordedElementsIgnoringCompletion(locationOptionsRecorder.events, [[LocationSearchOption.selectOnMap]])
-        AssertRecordedElementsIgnoringCompletion(selectedPickupRecorder.events, ["", DefaultLocationSearchViewModelTest.currentLocationString])
-        AssertRecordedElementsIgnoringCompletion(selectedDropoffRecorder.events, [""])
+        AssertRecordedElementsIgnoringCompletion(selectedPickupRecorder.events, [DefaultLocationSearchViewModelTest.currentLocationString])
+        AssertRecordedElementsIgnoringCompletion(selectedDropoffRecorder.events, [])
         AssertRecordedElementsIgnoringCompletion(isDoneActionEnabledRecorder.events, [false])
         XCTAssertEqual(listener.pickup, DefaultLocationSearchViewModelTest.expectedGeocodedCurrentLocation)
         XCTAssertNil(listener.dropoff)
         XCTAssertEqual(listener.methodCalls, ["selectPickup(_:)"])
         verify(historicalSearchInteractor, times(1)).historicalSearchOptions.get()
         verifyNoMoreInteractions(historicalSearchInteractor)
+        XCTAssertEqual(
+            initialStateRecorder.events, [
+                next(0, DefaultLocationSearchViewModelTest.initialState(initialPickup: nil,
+                                                                        initialDropoff: nil,
+                                                                        initialFocus: .dropoff)),
+                completed(0)
+        ])
     }
     
     func testStateMatchesExpectationBeforeInteractionsWithInitialPickupButNoInitialDropoff() {
-        setUp(initialPickup: GeocodedLocationModel(displayName: "pickup location",
-                                                   location: CLLocationCoordinate2D(latitude: 1, longitude: 2)),
-              initialDropoff: nil)
+        let initialPickup = GeocodedLocationModel(displayName: "pickup location",
+                                                  location: CLLocationCoordinate2D(latitude: 1, longitude: 2))
+        setUp(initialPickup: initialPickup, initialDropoff: nil, initialFocus: .pickup)
         scheduler.start()
         AssertRecordedElementsIgnoringCompletion(locationOptionsRecorder.events, [[LocationSearchOption.selectOnMap]])
-        AssertRecordedElementsIgnoringCompletion(selectedPickupRecorder.events, ["pickup location"])
-        AssertRecordedElementsIgnoringCompletion(selectedDropoffRecorder.events, [""])
+        AssertRecordedElementsIgnoringCompletion(selectedPickupRecorder.events, [])
+        AssertRecordedElementsIgnoringCompletion(selectedDropoffRecorder.events, [])
         AssertRecordedElementsIgnoringCompletion(isDoneActionEnabledRecorder.events, [false])
         XCTAssertNil(listener.pickup)
         XCTAssertNil(listener.dropoff)
         XCTAssertEqual(listener.methodCalls, [])
         verify(historicalSearchInteractor, times(1)).historicalSearchOptions.get()
         verifyNoMoreInteractions(historicalSearchInteractor)
+        XCTAssertEqual(
+            initialStateRecorder.events, [
+                next(0, DefaultLocationSearchViewModelTest.initialState(initialPickup: initialPickup,
+                                                                        initialDropoff: nil,
+                                                                        initialFocus: .pickup)),
+                completed(0)
+        ])
     }
-    
+
     func testStateMatchesExpectationBeforeInteractionsWithInitialDropoffButNoInitialPickup() {
-        setUp(initialPickup: nil,
-              initialDropoff: GeocodedLocationModel(displayName: "dropoff location",
-                                                    location: CLLocationCoordinate2D(latitude: 3, longitude: 4)))
+        let initialDropoff = GeocodedLocationModel(displayName: "dropoff location",
+                                                   location: CLLocationCoordinate2D(latitude: 3, longitude: 4))
+        setUp(initialPickup: nil, initialDropoff: initialDropoff, initialFocus: .pickup)
         scheduler.start()
         AssertRecordedElementsIgnoringCompletion(locationOptionsRecorder.events, [[LocationSearchOption.selectOnMap]])
-        AssertRecordedElementsIgnoringCompletion(selectedPickupRecorder.events, ["", DefaultLocationSearchViewModelTest.currentLocationString])
-        AssertRecordedElementsIgnoringCompletion(selectedDropoffRecorder.events, ["dropoff location"])
+        AssertRecordedElementsIgnoringCompletion(selectedPickupRecorder.events, [DefaultLocationSearchViewModelTest.currentLocationString])
+        AssertRecordedElementsIgnoringCompletion(selectedDropoffRecorder.events, [])
         AssertRecordedElementsIgnoringCompletion(isDoneActionEnabledRecorder.events, [false])
         XCTAssertEqual(listener.pickup, DefaultLocationSearchViewModelTest.expectedGeocodedCurrentLocation)
         XCTAssertNil(listener.dropoff)
         XCTAssertEqual(listener.methodCalls, ["selectPickup(_:)"])
         verify(historicalSearchInteractor, times(1)).historicalSearchOptions.get()
         verifyNoMoreInteractions(historicalSearchInteractor)
+        XCTAssertEqual(
+            initialStateRecorder.events, [
+                next(0, DefaultLocationSearchViewModelTest.initialState(initialPickup: nil,
+                                                                        initialDropoff: initialDropoff,
+                                                                        initialFocus: .pickup)),
+                completed(0)
+        ])
     }
-    
+
     func testSetDropoffTextProducesExpectedEvents() {
-        setUp(initialPickup: nil, initialDropoff: nil)
+        setUp(initialPickup: nil, initialDropoff: nil, initialFocus: .dropoff)
         scheduler.scheduleAt(1, action: { self.viewModelUnderTest.setDropoffText("d") })
         scheduler.scheduleAt(2, action: { self.viewModelUnderTest.setDropoffText("dr") })
         scheduler.start()
@@ -146,42 +195,55 @@ class DefaultLocationSearchViewModelTest: ReactiveTestCase {
             ]),
         ])
 
-        AssertRecordedElementsIgnoringCompletion(selectedPickupRecorder.events, ["", DefaultLocationSearchViewModelTest.currentLocationString])
-        AssertRecordedElementsIgnoringCompletion(selectedDropoffRecorder.events, [""])
+        AssertRecordedElementsIgnoringCompletion(selectedPickupRecorder.events, [DefaultLocationSearchViewModelTest.currentLocationString])
+        AssertRecordedElementsIgnoringCompletion(selectedDropoffRecorder.events, [])
         AssertRecordedElementsIgnoringCompletion(isDoneActionEnabledRecorder.events, [false])
         XCTAssertEqual(listener.pickup, DefaultLocationSearchViewModelTest.expectedGeocodedCurrentLocation)
         XCTAssertNil(listener.dropoff)
         XCTAssertEqual(listener.methodCalls, ["selectPickup(_:)"])
         verify(historicalSearchInteractor, times(1)).historicalSearchOptions.get()
         verifyNoMoreInteractions(historicalSearchInteractor)
+        XCTAssertEqual(
+            initialStateRecorder.events, [
+                next(0, DefaultLocationSearchViewModelTest.initialState(initialPickup: nil,
+                                                                        initialDropoff: nil,
+                                                                        initialFocus: .dropoff)),
+                completed(0)
+        ])
     }
 
     func testSetDuplicateDropoffTextProducesExpectedEvents() {
-        setUp(initialPickup: nil, initialDropoff: nil)
+        setUp(initialPickup: nil, initialDropoff: nil, initialFocus: .dropoff)
         scheduler.scheduleAt(1, action: { self.viewModelUnderTest.setDropoffText("dr") })
         scheduler.scheduleAt(2, action: { self.viewModelUnderTest.setDropoffText("dr") }) // duplicate. make sure we dedupe
         scheduler.start()
-        
+
         XCTAssertEqual(locationOptionsRecorder.events, [
             next(1, [LocationSearchOption.selectOnMap]),
             next(1, [
                 .autocompleteLocation(FixedLocationAutocompleteInteractor.autoCompleteResult(forSearchText: "dr")),
             ]),
         ])
-        
-        AssertRecordedElementsIgnoringCompletion(selectedPickupRecorder.events, ["", DefaultLocationSearchViewModelTest.currentLocationString])
-        AssertRecordedElementsIgnoringCompletion(selectedDropoffRecorder.events, [""])
+
+        AssertRecordedElementsIgnoringCompletion(selectedPickupRecorder.events, [ DefaultLocationSearchViewModelTest.currentLocationString])
+        AssertRecordedElementsIgnoringCompletion(selectedDropoffRecorder.events, [])
         AssertRecordedElementsIgnoringCompletion(isDoneActionEnabledRecorder.events, [false])
         XCTAssertEqual(listener.pickup, DefaultLocationSearchViewModelTest.expectedGeocodedCurrentLocation)
         XCTAssertNil(listener.dropoff)
         XCTAssertEqual(listener.methodCalls, ["selectPickup(_:)"])
         verify(historicalSearchInteractor, times(1)).historicalSearchOptions.get()
         verifyNoMoreInteractions(historicalSearchInteractor)
+        XCTAssertEqual(
+            initialStateRecorder.events, [
+                next(0, DefaultLocationSearchViewModelTest.initialState(initialPickup: nil,
+                                                                        initialDropoff: nil,
+                                                                        initialFocus: .dropoff)),
+                completed(0)
+        ])
     }
 
-    
     func testSetDropoffTextThenPickupTextProducesExpectedEvents() {
-        setUp(initialPickup: nil, initialDropoff: nil)
+        setUp(initialPickup: nil, initialDropoff: nil, initialFocus: .dropoff)
         scheduler.scheduleAt(1, action: { self.viewModelUnderTest.setDropoffText("d") })
         scheduler.scheduleAt(2, action: { self.viewModelUnderTest.setFocus(.pickup) })
         scheduler.scheduleAt(3, action: { self.viewModelUnderTest.setPickupText("p") })
@@ -204,20 +266,27 @@ class DefaultLocationSearchViewModelTest: ReactiveTestCase {
             ]),
         ])
 
-        AssertRecordedElementsIgnoringCompletion(selectedPickupRecorder.events, ["", DefaultLocationSearchViewModelTest.currentLocationString])
-        AssertRecordedElementsIgnoringCompletion(selectedDropoffRecorder.events, [""])
+        AssertRecordedElementsIgnoringCompletion(selectedPickupRecorder.events, [DefaultLocationSearchViewModelTest.currentLocationString])
+        AssertRecordedElementsIgnoringCompletion(selectedDropoffRecorder.events, [])
         AssertRecordedElementsIgnoringCompletion(isDoneActionEnabledRecorder.events, [false])
         XCTAssertEqual(listener.pickup, DefaultLocationSearchViewModelTest.expectedGeocodedCurrentLocation)
         XCTAssertNil(listener.dropoff)
         XCTAssertEqual(listener.methodCalls, ["selectPickup(_:)"])
         verify(historicalSearchInteractor, times(1)).historicalSearchOptions.get()
         verifyNoMoreInteractions(historicalSearchInteractor)
+        XCTAssertEqual(
+            initialStateRecorder.events, [
+                next(0, DefaultLocationSearchViewModelTest.initialState(initialPickup: nil,
+                                                                        initialDropoff: nil,
+                                                                        initialFocus: .dropoff)),
+                completed(0)
+        ])
     }
 
     func testSetDropoffTextThenSelectDropoffProducesExpectedEvents() {
         let expectedAutocompleteResult = FixedLocationAutocompleteInteractor.autoCompleteResult(forSearchText: "d")
 
-        setUp(initialPickup: nil, initialDropoff: nil)
+        setUp(initialPickup: nil, initialDropoff: nil, initialFocus: .dropoff)
         scheduler.scheduleAt(1, action: { self.viewModelUnderTest.setDropoffText("d") })
         scheduler.scheduleAt(2, action: {
             self.viewModelUnderTest.makeSelection(.autocompleteLocation(expectedAutocompleteResult))
@@ -231,8 +300,8 @@ class DefaultLocationSearchViewModelTest: ReactiveTestCase {
             ])
         ])
 
-        XCTAssertEqual(selectedDropoffRecorder.events, [next(0, ""), next(3, "d")])
-        XCTAssertEqual(selectedPickupRecorder.events, [next(0, ""), next(0, DefaultLocationSearchViewModelTest.currentLocationString),])
+        XCTAssertEqual(selectedDropoffRecorder.events, [next(3, "d")])
+        XCTAssertEqual(selectedPickupRecorder.events, [next(0, DefaultLocationSearchViewModelTest.currentLocationString),])
 
         XCTAssertEqual(isDoneActionEnabledRecorder.events, [next(0, false), completed(0)])
         XCTAssertEqual(listener.pickup, DefaultLocationSearchViewModelTest.expectedGeocodedCurrentLocation)
@@ -242,57 +311,72 @@ class DefaultLocationSearchViewModelTest: ReactiveTestCase {
         verify(historicalSearchInteractor, times(1)).historicalSearchOptions.get()
         verify(historicalSearchInteractor, times(1)).store(searchOption: equal(to: expectedAutocompleteResult))
         verifyNoMoreInteractions(historicalSearchInteractor)
+        XCTAssertEqual(
+            initialStateRecorder.events, [
+                next(0, DefaultLocationSearchViewModelTest.initialState(initialPickup: nil,
+                                                                        initialDropoff: nil,
+                                                                        initialFocus: .dropoff)),
+                completed(0)
+        ])
     }
 
     func testCancelInvokesCancelLocationSearchOnListener() {
-        setUp(initialPickup: nil, initialDropoff: nil)
+        setUp(initialPickup: nil, initialDropoff: nil, initialFocus: .dropoff)
         viewModelUnderTest.cancel()
         XCTAssertEqual(listener.methodCalls, ["cancelLocationSearch()"])
     }
-    
+
     func testDoneInvokesDoneSearchingOnListener() {
-        setUp(initialPickup: GeocodedLocationModel(displayName: "pickup location",
-                                                   location: CLLocationCoordinate2D(latitude: 1, longitude: 2)),
-              initialDropoff: GeocodedLocationModel(displayName: "dropoff location",
-                                                    location: CLLocationCoordinate2D(latitude: 3, longitude: 4)))
+        let initialPickup = GeocodedLocationModel(displayName: "pickup location",
+                                                  location: CLLocationCoordinate2D(latitude: 1, longitude: 2))
+        let initialDropoff = GeocodedLocationModel(displayName: "dropoff location",
+                                                   location: CLLocationCoordinate2D(latitude: 3, longitude: 4))
+        setUp(initialPickup: initialPickup, initialDropoff: initialDropoff, initialFocus: .dropoff)
         scheduler.scheduleAt(1, action: { self.viewModelUnderTest.done() })
         scheduler.start()
         AssertRecordedElementsIgnoringCompletion(locationOptionsRecorder.events, [[LocationSearchOption.selectOnMap]])
-        AssertRecordedElementsIgnoringCompletion(selectedPickupRecorder.events, ["pickup location"])
-        AssertRecordedElementsIgnoringCompletion(selectedDropoffRecorder.events, ["dropoff location"])
+        AssertRecordedElementsIgnoringCompletion(selectedPickupRecorder.events, [])
+        AssertRecordedElementsIgnoringCompletion(selectedDropoffRecorder.events, [])
         AssertRecordedElementsIgnoringCompletion(isDoneActionEnabledRecorder.events, [true])
         XCTAssertNil(listener.pickup)
         XCTAssertNil(listener.dropoff)
         XCTAssertEqual(listener.methodCalls, ["doneSearching()"])
+        XCTAssertEqual(
+            initialStateRecorder.events, [
+                next(0, DefaultLocationSearchViewModelTest.initialState(initialPickup: initialPickup,
+                                                                        initialDropoff: initialDropoff,
+                                                                        initialFocus: .dropoff)),
+                completed(0)
+        ])
     }
-    
+
     func testSelectDropoffOnMapInvokesSetDropoffOnMapOnListener() {
-        setUp(initialPickup: nil, initialDropoff: nil)
+        setUp(initialPickup: nil, initialDropoff: nil, initialFocus: .dropoff)
         scheduler.scheduleAt(1, action: { self.viewModelUnderTest.makeSelection(LocationSearchOption.selectOnMap) })
         scheduler.start()
         AssertRecordedElementsIgnoringCompletion(locationOptionsRecorder.events, [[LocationSearchOption.selectOnMap]])
-        AssertRecordedElementsIgnoringCompletion(selectedPickupRecorder.events, ["", DefaultLocationSearchViewModelTest.currentLocationString])
-        AssertRecordedElementsIgnoringCompletion(selectedDropoffRecorder.events, [""])
+        AssertRecordedElementsIgnoringCompletion(selectedPickupRecorder.events, [DefaultLocationSearchViewModelTest.currentLocationString])
+        AssertRecordedElementsIgnoringCompletion(selectedDropoffRecorder.events, [])
         AssertRecordedElementsIgnoringCompletion(isDoneActionEnabledRecorder.events, [false])
         XCTAssertEqual(listener.pickup, DefaultLocationSearchViewModelTest.expectedGeocodedCurrentLocation)
         XCTAssertNil(listener.dropoff)
         XCTAssertEqual(listener.methodCalls, ["selectPickup(_:)", "setDropoffOnMap()"])
     }
-    
+
     func testSelectPickupOnMapInvokesSetPickupOnMapOnListenerButDoesNotStoreAutocompleteResult() {
-        setUp(initialPickup: nil, initialDropoff: nil)
+        setUp(initialPickup: nil, initialDropoff: nil, initialFocus: .dropoff)
         scheduler.scheduleAt(1, action: { self.viewModelUnderTest.setFocus(.pickup) })
         scheduler.scheduleAt(2, action: { self.viewModelUnderTest.makeSelection(LocationSearchOption.selectOnMap) })
         scheduler.start()
-        
+
         XCTAssertEqual(locationOptionsRecorder.events, [
             next(1, [LocationSearchOption.selectOnMap]),
             next(1, [LocationSearchOption.currentLocation, LocationSearchOption.selectOnMap]),
             next(1, [LocationSearchOption.currentLocation, LocationSearchOption.selectOnMap]),
         ])
-        
-        AssertRecordedElementsIgnoringCompletion(selectedPickupRecorder.events, ["", DefaultLocationSearchViewModelTest.currentLocationString])
-        AssertRecordedElementsIgnoringCompletion(selectedDropoffRecorder.events, [""])
+
+        AssertRecordedElementsIgnoringCompletion(selectedPickupRecorder.events, [ DefaultLocationSearchViewModelTest.currentLocationString])
+        AssertRecordedElementsIgnoringCompletion(selectedDropoffRecorder.events, [])
         AssertRecordedElementsIgnoringCompletion(isDoneActionEnabledRecorder.events, [false])
         XCTAssertEqual(listener.pickup, DefaultLocationSearchViewModelTest.expectedGeocodedCurrentLocation)
         XCTAssertNil(listener.dropoff)
@@ -307,7 +391,10 @@ class DefaultLocationSearchViewModelTest: ReactiveTestCase {
             LocationAutocompleteResult.forUnresolvedLocation(id: "1", primaryText: "1", secondaryText: "1")
         ]
         let expectedHistoricalOptions = historicalSearchResults.map { LocationSearchOption.historical($0) }
-        setUp(initialPickup: nil, initialDropoff: nil, historicalSearchResults: historicalSearchResults)
+        setUp(initialPickup: nil,
+              initialDropoff: nil,
+              initialFocus: .dropoff,
+              historicalSearchResults: historicalSearchResults)
         scheduler.scheduleAt(1, action: { self.viewModelUnderTest.setDropoffText("d") })
         scheduler.start()
 
@@ -325,7 +412,10 @@ class DefaultLocationSearchViewModelTest: ReactiveTestCase {
             LocationAutocompleteResult.forUnresolvedLocation(id: "1", primaryText: "1", secondaryText: "1")
         ]
         let expectedHistoricalOptions = historicalSearchResults.map { LocationSearchOption.historical($0) }
-        setUp(initialPickup: nil, initialDropoff: nil, historicalSearchResults: historicalSearchResults)
+        setUp(initialPickup: nil,
+              initialDropoff: nil,
+              initialFocus: .dropoff,
+              historicalSearchResults: historicalSearchResults)
         scheduler.scheduleAt(1, action: { self.viewModelUnderTest.setFocus(.pickup) })
         scheduler.scheduleAt(2, action: { self.viewModelUnderTest.setPickupText("p") })
         scheduler.start()

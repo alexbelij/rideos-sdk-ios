@@ -53,27 +53,42 @@ class DefaultDrivingModelTest: ReactiveTestCase {
     func testViewModelThatIsNavigatingTransitionsToConfirmingArrivalOnFinishNavigation() {
         setUp(withInitialStep: .navigating)
 
-        scheduler.scheduleAt(0) { self.viewModelUnderTest.finishedNavigation() }
+        scheduler.scheduleAt(0) { self.viewModelUnderTest.finishedNavigation(didCancelNavigation: false) }
 
         scheduler.start()
 
         XCTAssertEqual(stateRecorder.events, [
             next(0, DrivingViewState(drivingStep: .navigating,
                                      destination: DefaultDrivingModelTest.destination)),
-            next(1, DrivingViewState(drivingStep: .confirmingArrival,
+            next(1, DrivingViewState(drivingStep: .confirmingArrival(showBackToNavigation: false),
+                                     destination: DefaultDrivingModelTest.destination)),
+        ])
+    }
+    
+    func testViewModelThatIsNavigatingTransitionsToConfirmingArrivalWithBackToNavigationEnabledOnCancellation() {
+        setUp(withInitialStep: .navigating)
+
+        scheduler.scheduleAt(0) { self.viewModelUnderTest.finishedNavigation(didCancelNavigation: true) }
+
+        scheduler.start()
+
+        XCTAssertEqual(stateRecorder.events, [
+            next(0, DrivingViewState(drivingStep: .navigating,
+                                     destination: DefaultDrivingModelTest.destination)),
+            next(1, DrivingViewState(drivingStep: .confirmingArrival(showBackToNavigation: true),
                                      destination: DefaultDrivingModelTest.destination)),
         ])
     }
 
     func testViewModelWaitingToConfirmArrivalMaintainsSameStateAfterConfirmingArrival() {
-        setUp(withInitialStep: .confirmingArrival)
+        setUp(withInitialStep: .confirmingArrival(showBackToNavigation: false))
 
         scheduler.scheduleAt(0) { self.viewModelUnderTest.arrivalConfirmed() }
 
         scheduler.start()
 
         XCTAssertEqual(stateRecorder.events, [
-            next(0, DrivingViewState(drivingStep: .confirmingArrival,
+            next(0, DrivingViewState(drivingStep: .confirmingArrival(showBackToNavigation: false),
                                      destination: DefaultDrivingModelTest.destination)),
         ])
     }

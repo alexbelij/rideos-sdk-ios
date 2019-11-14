@@ -66,8 +66,7 @@ public class TopDetailView: UIView {
             RideOsDriverResourceLoader.instance.getString("ai.rideos.driver.driver-status-switch.online-text")
         driverStatusSwitch.offText =
             RideOsDriverResourceLoader.instance.getString("ai.rideos.driver.driver-status-switch.offline-text")
-        driverStatusSwitch.set(thumbIcon:
-            RideOsDriverResourceLoader.instance.getImage("ai.rideos.driver.car-front"))
+        driverStatusSwitch.set(thumbIcon: DriverImages.carFront())
         driverStatusSwitch.offTrackColor =
             RideOsDriverResourceLoader.instance.getColor("ai.rideos.driver-status-switch.offline-track-color")
         driverStatusSwitch.onTrackColor =

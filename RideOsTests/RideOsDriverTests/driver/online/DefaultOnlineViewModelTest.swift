@@ -8,11 +8,11 @@ import XCTest
 
 class DefaultOnlineViewModelTest: ReactiveTestCase {
     private static let deviceLocation = CLLocation(latitude: 42, longitude: 42)
-
+    private static let contactInfo = ContactInfo(name: "test_name")
     private static let pickupAction = VehiclePlanAction(
-        destination: CLLocationCoordinate2D(latitude: 1,longitude: 2),
+        destination: CLLocationCoordinate2D(latitude: 1, longitude: 2),
         actionType: .driveToPickup,
-        tripResourceInfo: TripResourceInfo(numberOfPassengers: 4, nameOfTripRequester: "test_name")
+        tripResourceInfo: TripResourceInfo(numberOfPassengers: 4, contactInfo: contactInfo)
     )
     private static let pickupWaypoint = VehiclePlan.Waypoint(taskId: "task_id",
                                                              stepIds: ["pickup_step_id"],
@@ -21,7 +21,7 @@ class DefaultOnlineViewModelTest: ReactiveTestCase {
     private static let loadResourceAction = VehiclePlanAction(
         destination: CLLocationCoordinate2D(latitude: 1, longitude: 2),
         actionType: .loadResource,
-        tripResourceInfo: TripResourceInfo(numberOfPassengers: 4, nameOfTripRequester: "test_name")
+        tripResourceInfo: TripResourceInfo(numberOfPassengers: 4, contactInfo: contactInfo)
     )
     
     private static let loadResourceWaypoint = VehiclePlan.Waypoint(
@@ -33,7 +33,7 @@ class DefaultOnlineViewModelTest: ReactiveTestCase {
     private static let dropoffAction = VehiclePlanAction(
         destination: CLLocationCoordinate2D(latitude: 3, longitude: 4),
         actionType: .driveToDropoff,
-        tripResourceInfo: TripResourceInfo(numberOfPassengers: 4, nameOfTripRequester: "test_name")
+        tripResourceInfo: TripResourceInfo(numberOfPassengers: 4, contactInfo: contactInfo)
     )
     private static let dropoffWaypoint = VehiclePlan.Waypoint(taskId: "task_id",
                                                               stepIds: ["dropoff_step_id"],
@@ -63,7 +63,7 @@ class DefaultOnlineViewModelTest: ReactiveTestCase {
             schedulerProvider: TestSchedulerProvider(scheduler: scheduler),
             logger: ConsoleLogger()
         )
-        stateRecorder = scheduler.record(viewModelUnderTest.getOnlineViewState())
+        stateRecorder = scheduler.record(viewModelUnderTest.onlineViewState)
 
         assertNil(viewModelUnderTest, after: { self.viewModelUnderTest = nil })
     }

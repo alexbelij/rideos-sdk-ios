@@ -18,8 +18,6 @@ import RideOsCommon
 import RxCocoa
 import RxSwift
 
-public typealias MatchedToVehicleDialog = BottomDialogStackView & MatchedToVehicleView
-
 public class MatchedToVehicleViewController: BackgroundMapWithDrawerViewController, PassengerStateObserver {
     private let disposeBag = DisposeBag()
 
@@ -28,13 +26,15 @@ public class MatchedToVehicleViewController: BackgroundMapWithDrawerViewControll
     private let urlLauncher: UrlLauncher
 
     public required init?(coder _: NSCoder) {
-        fatalError("#(function) is unimplemented")
+        fatalError("\(#function) is unimplemented")
     }
 
     public init(dialogView: MatchedToVehicleDialog,
                 mapViewController: MapViewController,
                 viewModel: MatchedToVehicleViewModel,
                 cancelListener: @escaping () -> Void,
+                editPickupListener: (() -> Void)?,
+                editDropoffListener: (() -> Void)?,
                 schedulerProvider: SchedulerProvider) {
         self.dialogView = dialogView
         self.viewModel = viewModel
@@ -42,14 +42,17 @@ public class MatchedToVehicleViewController: BackgroundMapWithDrawerViewControll
 
         super.init(backgroundMapViewController: BackgroundMapViewController(mapViewController: mapViewController),
                    drawerContentView: dialogView)
-
+        dialogView.delegate = self
         viewModel.dialogModel
             .observeOn(schedulerProvider.mainThread())
             .subscribe(onNext: { [dialogView] in
                 dialogView.headerText = $0.status
                 dialogView.waypointLabel = $0.nextWaypoint
                 dialogView.licensePlate = $0.vehicleInfo.licensePlate
-                dialogView.isShowingContactButton = !$0.vehicleInfo.contactInfo.isEmpty
+                dialogView.contactButtonStyle =
+                    MatchedToVehicleViewController.contactButtonStyle(for: $0.vehicleInfo.contactInfo)
+                dialogView.pickupLabel = $0.pickupLabel
+                dialogView.dropoffLabel = $0.dropoffLabel
             })
             .disposed(by: disposeBag)
 
@@ -71,6 +74,16 @@ public class MatchedToVehicleViewController: BackgroundMapWithDrawerViewControll
                 self.present(alertController, animated: true, completion: nil)
             })
             .disposed(by: disposeBag)
+
+        dialogView.editPickupButtonTapEvents
+            .observeOn(schedulerProvider.mainThread())
+            .subscribe(onNext: { [editPickupListener] in editPickupListener?() })
+            .disposed(by: disposeBag)
+
+        dialogView.editDropoffButtonTapEvents
+            .observeOn(schedulerProvider.mainThread())
+            .subscribe(onNext: { [editDropoffListener] in editDropoffListener?() })
+            .disposed(by: disposeBag)
     }
 
     public func updatePassengerState(_ state: RiderTripStateModel) {
@@ -80,5 +93,29 @@ public class MatchedToVehicleViewController: BackgroundMapWithDrawerViewControll
     public override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
         backgroundMapViewController.mapViewController.connect(mapStateProvider: viewModel)
+    }
+
+    private static func contactButtonStyle(for contactInfo: ContactInfo)
+        -> LicensePlateAndContactButtonView.ContactButtonStyle {
+        guard let scheme = contactInfo.url?.scheme?.lowercased() else {
+            return .hidden
+        }
+        if scheme == "tel" {
+            return .phone
+        } else {
+            return .chatBubble
+        }
+    }
+}
+
+extension MatchedToVehicleViewController: MatchedToVehicleDialogDelegate {
+    public func matchedToVehicleDialog(_: MatchedToVehicleDialog,
+                                       didChangeCollapsedHeightTo collapsedHeight: CGFloat) {
+        collapsedDrawerHeight = collapsedHeight
+    }
+
+    public func matchedToVehicleDialog(_: MatchedToVehicleDialog,
+                                       didChangeExpandedHeightTo expandedHeight: CGFloat) {
+        expandedDrawerHeight = expandedHeight
     }
 }

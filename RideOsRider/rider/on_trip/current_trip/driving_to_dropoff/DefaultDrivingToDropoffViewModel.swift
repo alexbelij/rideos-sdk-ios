@@ -57,7 +57,9 @@ public class DefaultDrivingToDropoffViewModel: DefaultMatchedToVehicleViewModel 
                 status: DefaultDrivingToDropoffViewModel.statusPrefix
                     + String.timeOfDayLabelFrom(startDate: currentDateProvider(), interval: route.travelTime),
                 nextWaypoint: dropoff.displayName,
-                vehicleInfo: vehicleInfo
+                vehicleInfo: vehicleInfo,
+                pickupLabel: pickup.displayName,
+                dropoffLabel: dropoff.displayName
             ),
             mapSettings: MapSettings(shouldShowUserLocation: false)
         )

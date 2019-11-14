@@ -41,6 +41,7 @@ public class SelectVehicleDialog: BottomDialogStackView {
             label.text = item.displayName
             label.font = SelectVehicleDialog.vehiclePickerFont
             label.textAlignment = .center
+            label.textColor = .black
             return label
         }
     }

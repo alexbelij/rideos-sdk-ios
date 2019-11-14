@@ -20,4 +20,5 @@ public enum OnlineViewState: Equatable {
     case drivingToPickup(waypoint: VehiclePlan.Waypoint)
     case waitingForPassenger(waypoint: VehiclePlan.Waypoint)
     case drivingToDropoff(waypoint: VehiclePlan.Waypoint)
+    case tripDetails(plan: VehiclePlan)
 }

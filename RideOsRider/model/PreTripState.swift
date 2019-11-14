@@ -17,14 +17,10 @@ import Foundation
 import RideOsCommon
 
 public enum PreTripState: Equatable {
-    case selectingPickupDropoff
-    case confirmingDropoff(
-        unconfirmedPickupLocation: PreTripLocation,
-        unconfirmedDropoffLocation: PreTripLocation
-    )
-    case confirmingPickup(
-        unconfirmedPickupLocation: PreTripLocation,
-        confirmedDropoffLocation: DesiredAndAssignedLocation
+    case selectingPickupDropoff(
+        initialPickupLocation: PreTripLocation?,
+        initialDropoffLocation: PreTripLocation?,
+        initialFocus: LocationSearchFocusType
     )
     case confirmingTrip(
         confirmedPickupLocation: DesiredAndAssignedLocation,

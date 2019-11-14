@@ -15,19 +15,18 @@
 
 import Eureka
 import Foundation
+import RxSwift
 import UIKit
 
-class AccountSettingsFormViewController: FormViewController {
-    private let userStorageReader: UserStorageReader
-    private let userStorageWriter: UserStorageWriter
-    private let userEmailAddress: String?
+public class AccountSettingsFormViewController: FormViewController {
+    private let viewModel: AccountSettingsViewModel
+    private let schedulerProvider: SchedulerProvider
+    private let disposeBag = DisposeBag()
 
-    init(userStorageReader: UserStorageReader,
-         userStorageWriter: UserStorageWriter,
-         userEmailAddress: String?) {
-        self.userStorageReader = userStorageReader
-        self.userStorageWriter = userStorageWriter
-        self.userEmailAddress = userEmailAddress
+    public init(viewModel: AccountSettingsViewModel = DefaultAccountSettingsViewModel(),
+                schedulerProvider: SchedulerProvider = DefaultSchedulerProvider()) {
+        self.viewModel = viewModel
+        self.schedulerProvider = schedulerProvider
         super.init(nibName: nil, bundle: nil)
     }
 
@@ -35,7 +34,7 @@ class AccountSettingsFormViewController: FormViewController {
         fatalError("\(#function) is unimplemented")
     }
 
-    override func viewDidLoad() {
+    public override func viewDidLoad() {
         super.viewDidLoad()
 
         navigationItem.title = MainSettingsFormViewController.editProfileString
@@ -43,20 +42,91 @@ class AccountSettingsFormViewController: FormViewController {
         let preferredNameSectionTitle = RideOsCommonResourceLoader.instance.getString(
             "ai.rideos.common.settings.account.preferred-name"
         )
+
+        let preferredNameRow = TextRow().cellSetup { [unowned self] cell, row in
+            cell.textField.keyboardType = .namePhonePad
+            cell.textField.autocorrectionType = .no
+
+            cell.textField.rx.controlEvent(.editingDidEnd)
+                .bind(onNext: {
+                    guard let updatedPreferredName = cell.textField.text else {
+                        return
+                    }
+
+                    self.viewModel.update(preferredName: updatedPreferredName)
+                        .subscribe()
+                        .disposed(by: self.disposeBag)
+                })
+                .disposed(by: self.disposeBag)
+
+            row.value = try? self.viewModel.preferredName.value()
+        }
+
         form +++ Section(preferredNameSectionTitle)
-            <<< TextRow { [userStorageReader] row in
-                row.value = userStorageReader.get(CommonUserStorageKeys.preferredName)
-            }.onChange { [userStorageWriter] row in
-                userStorageWriter.set(key: CommonUserStorageKeys.preferredName, value: row.value)
-            }
+            <<< preferredNameRow
+
+        viewModel.preferredName
+            .observeOn(schedulerProvider.computation())
+            .distinctUntilChanged()
+            .observeOn(schedulerProvider.mainThread())
+            .subscribe(onNext: { [tableView] preferredName in
+                preferredNameRow.value = preferredName
+                tableView?.reloadData()
+            })
+            .disposed(by: disposeBag)
+
+        let phoneNumberSectionTitle = RideOsCommonResourceLoader.instance.getString(
+            "ai.rideos.common.settings.account.phone-number"
+        )
+
+        let phoneNumberRow = TextRow().cellSetup { [unowned self] cell, row in
+            cell.textField.keyboardType = .phonePad
+            cell.textField.autocorrectionType = .no
+
+            cell.textField.rx.controlEvent(.editingDidEnd)
+                .bind(onNext: {
+                    guard let updatedPhoneNumber = cell.textField.text else {
+                        return
+                    }
+
+                    self.viewModel.update(phoneNumber: updatedPhoneNumber)
+                        .subscribe()
+                        .disposed(by: self.disposeBag)
+                })
+                .disposed(by: self.disposeBag)
+
+            row.value = try? self.viewModel.phoneNumber.value()
+        }
+
+        form +++ Section(phoneNumberSectionTitle)
+            <<< phoneNumberRow
+
+        viewModel.phoneNumber
+            .observeOn(schedulerProvider.computation())
+            .distinctUntilChanged()
+            .observeOn(schedulerProvider.mainThread())
+            .subscribe(onNext: { [tableView] preferredName in
+                phoneNumberRow.value = preferredName
+                tableView?.reloadData()
+            })
+            .disposed(by: disposeBag)
 
         let emailAddressSectionTitle = RideOsCommonResourceLoader.instance.getString(
             "ai.rideos.common.settings.account.email-address"
         )
+        let emailRow = LabelRow { row in
+            row.baseCell.backgroundColor = self.tableView.backgroundColor
+        }
+
         form +++ Section(emailAddressSectionTitle)
-            <<< LabelRow { row in
-                row.title = userEmailAddress
-                row.baseCell.backgroundColor = self.tableView.backgroundColor
-            }
+            <<< emailRow
+
+        viewModel.email
+            .observeOn(schedulerProvider.mainThread())
+            .subscribe(onSuccess: { [tableView] email in
+                emailRow.title = email
+                tableView?.reloadData()
+            })
+            .disposed(by: disposeBag)
     }
 }

@@ -15,13 +15,14 @@
 
 import CoreLocation
 import Foundation
+import RideOsCommon
 
 public struct TripResourceInfo: Equatable {
     public let numberOfPassengers: Int
-    public let nameOfTripRequester: String
+    public let contactInfo: ContactInfo
 
-    public init(numberOfPassengers: Int, nameOfTripRequester: String) {
+    public init(numberOfPassengers: Int, contactInfo: ContactInfo) {
         self.numberOfPassengers = numberOfPassengers
-        self.nameOfTripRequester = nameOfTripRequester
+        self.contactInfo = contactInfo
     }
 }

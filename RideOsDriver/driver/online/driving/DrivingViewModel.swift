@@ -20,7 +20,8 @@ import RxSwift
 public protocol DrivingViewModel: class {
     var drivingViewState: Observable<DrivingViewState> { get }
 
+    func getCurrentDrivingViewState() throws -> DrivingViewState
     func startNavigation()
     func arrivalConfirmed()
-    func finishedNavigation()
+    func finishedNavigation(didCancelNavigation: Bool)
 }

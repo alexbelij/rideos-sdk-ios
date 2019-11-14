@@ -1,6 +1,7 @@
 import CoreLocation
 import Foundation
 import RideOsApi
+import RideOsCommon
 import RideOsDriver
 import RideOsTestHelpers
 import RxSwift
@@ -58,6 +59,14 @@ public class FixedDriverVehicleInteractor: MethodCallRecorder, DriverVehicleInte
         return Completable.empty()
     }
     
+    public func rejectTrip(vehicleId: String, tripId: String) -> Completable {
+        return Completable.empty()
+    }
+    
+    public func cancelTrip(tripId: String) -> Completable {
+        return Completable.empty()
+    }
+    
     public func getVehicleStatus(vehicleId: String) -> Single<VehicleStatus> {
         recordMethodCall(#function)
         return Single.just(vehicleStatus)
@@ -81,5 +90,20 @@ public class FixedDriverVehicleInteractor: MethodCallRecorder, DriverVehicleInte
     ) -> Completable {
         recordMethodCall(#function)
         return Completable.empty()
+    }
+    
+    public func updateContactInfo(vehicleId: String, contactInfo: ContactInfo) -> Completable {
+        recordMethodCall(#function)
+        return Completable.empty()
+    }
+    
+    public func updateLicensePlate(vehicleId: String, licensePlate: String) -> Completable {
+        recordMethodCall(#function)
+        return Completable.empty()
+    }
+    
+    public func getVehicleInfo(vehicleId: String) -> Single<VehicleInfo> {
+        recordMethodCall(#function)
+        return Single.just(VehicleInfo(licensePlate: "", contactInfo: ContactInfo()))
     }
 }

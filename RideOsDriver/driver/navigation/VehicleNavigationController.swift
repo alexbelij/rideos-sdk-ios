@@ -20,5 +20,5 @@ public typealias UIVehicleNavigationController = UIViewController & VehicleNavig
 
 public protocol VehicleNavigationController: class {
     func navigate(to destination: CLLocationCoordinate2D,
-                  navigationDoneListener: @escaping () -> Void)
+                  navigationDoneListener: @escaping (Bool) -> Void)
 }

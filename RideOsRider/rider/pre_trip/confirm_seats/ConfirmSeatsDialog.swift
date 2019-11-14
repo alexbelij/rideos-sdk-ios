@@ -55,6 +55,7 @@ extension ConfirmSeatsDialog {
         label.textAlignment = .center
         label.font = UIFont.systemFont(ofSize: 18)
         label.text = RideOsRiderResourceLoader.instance.getString("ai.rideos.rider.confirm-seats.label")
+        label.textColor = .black
         return label
     }
 }

@@ -34,7 +34,9 @@ class DefaultMatchedToVehicleViewModelTest: ReactiveTestCase {
             dialogModel: MatchedToVehicleStatusModel(status: "status0",
                                                      nextWaypoint: "waypoint0",
                                                      vehicleInfo: VehicleInfo(licensePlate: "vehicleLicensePlate0",
-                                                                              contactInfo: ContactInfo())),
+                                                                              contactInfo: ContactInfo()),
+                                                     pickupLabel: "pickup0",
+                                                     dropoffLabel: "dropoff0"),
             mapSettings: MapSettings(shouldShowUserLocation: true)
         ),
         MatchedToVehicleModel(
@@ -46,7 +48,9 @@ class DefaultMatchedToVehicleViewModelTest: ReactiveTestCase {
             dialogModel: MatchedToVehicleStatusModel(status: "status1",
                                                      nextWaypoint: "waypoint1",
                                                      vehicleInfo: VehicleInfo(licensePlate: "vehicleLicensePlate1",
-                                                                              contactInfo: ContactInfo())),
+                                                                              contactInfo: ContactInfo()),
+                                                     pickupLabel: "pickup1",
+                                                     dropoffLabel: "dropoff1"),
             mapSettings: MapSettings(shouldShowUserLocation: false)
         ),
         MatchedToVehicleModel(
@@ -58,7 +62,9 @@ class DefaultMatchedToVehicleViewModelTest: ReactiveTestCase {
             dialogModel: MatchedToVehicleStatusModel(status: "status2",
                                                      nextWaypoint: "waypoint2",
                                                      vehicleInfo: VehicleInfo(licensePlate: "vehicleLicensePlate2",
-                                                                              contactInfo: ContactInfo())),
+                                                                              contactInfo: ContactInfo()),
+                                                     pickupLabel: "pickup2",
+                                                     dropoffLabel: "dropoff2"),
             mapSettings: MapSettings(shouldShowUserLocation: true)
         )
     ]

@@ -39,9 +39,9 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         window.rootViewController = RiderViewController(
             developerSettingsFormViewControllerFactory: { userStorageReader, userStorageWriter in
                 CommonDeveloperSettingsFormViewController(
+                    fleetSelectionViewModel: DefaultFleetSelectionViewModel(),
                     userStorageReader: userStorageReader,
-                    userStorageWriter: userStorageWriter,
-                    fleetSelectionViewModel: DefaultFleetSelectionViewModel()
+                    userStorageWriter: userStorageWriter
                 )
             },
             loginMethods: [.auth0UsernamePassword(userDatabaseId: AppDelegate.userDatabaseId)]

@@ -1,4 +1,5 @@
 import CoreLocation
+import Cuckoo
 import RideOsCommon
 import RideOsTestHelpers
 import RideOsRider
@@ -9,6 +10,10 @@ import XCTest
 class DefaultPreTripViewModelTest: ReactiveTestCase {
     private static let tripId = "trip_id"
 
+    private static let initialPreTripState: PreTripState = .selectingPickupDropoff(initialPickupLocation: nil,
+                                                                                   initialDropoffLocation: nil,
+                                                                                   initialFocus: .dropoff)
+
     private static let pickupLocation = PreTripLocation(
         desiredAndAssignedLocation: DesiredAndAssignedLocation(
             desiredLocation: NamedTripLocation(
@@ -16,16 +21,9 @@ class DefaultPreTripViewModelTest: ReactiveTestCase {
                 displayName: "pickup"
             )
         ),
-        wasSetOnMap: false
+        wasConfirmed: false
     )
-
-    private static let confirmedPickupLocation = DesiredAndAssignedLocation(
-        desiredLocation: NamedTripLocation(
-            tripLocation: TripLocation(location: CLLocationCoordinate2D(latitude: 2, longitude: 2)),
-            displayName: "confirmed pickup"
-        )
-    )
-
+    
     private static let dropoffLocation = PreTripLocation(
         desiredAndAssignedLocation: DesiredAndAssignedLocation(
             desiredLocation: NamedTripLocation(
@@ -33,19 +31,12 @@ class DefaultPreTripViewModelTest: ReactiveTestCase {
                 displayName: "dropoff"
             )
         ),
-        wasSetOnMap: false
+        wasConfirmed: false
     )
-
-    private static let confirmedDropoffLocation = DesiredAndAssignedLocation(
-        desiredLocation: NamedTripLocation(
-            tripLocation: TripLocation(location: CLLocationCoordinate2D(latitude: 3, longitude: 3)),
-            displayName: "confirmed dropoff"
-        )
-    )
-
+    
     var viewModelUnderTest: DefaultPreTripViewModel!
     var stateRecorder: TestableObserver<PreTripState>!
-    var listener: RecordingPreTripListener!
+    var listener: MockPreTripListener!
 
     func setUp(enableSeatCountSelection: Bool,
                createTripObservable: Observable<String> = Observable.just(DefaultPreTripViewModelTest.tripId)) {
@@ -53,16 +44,31 @@ class DefaultPreTripViewModelTest: ReactiveTestCase {
 
         ResolvedFleet.instance.set(resolvedFleet: FleetInfo.defaultFleetInfo)
 
-        listener = RecordingPreTripListener()
+        listener = MockPreTripListener()
+        stub(listener) { stub in
+            when(stub.onTripCreated(tripId: any())).thenDoNothing()
+            when(stub.cancelPreTrip()).thenDoNothing()
+        }
+
+        let tripInteractor = MockTripInteractor()
+        stub(tripInteractor) { stub in
+            when(
+                stub.createTripForPassenger(passengerId: any(),
+                                            contactInfo: any(),
+                                            fleetId: any(),
+                                            numPassengers: any(),
+                                            pickupLocation: any(),
+                                            dropoffLocation: any(),
+                                            vehicleId: any())
+            ).thenReturn(createTripObservable)
+            when(stub.cancelTrip(passengerId: any(), tripId: any())).thenReturn(Completable.never())
+        }
 
         viewModelUnderTest = DefaultPreTripViewModel(
             userStorageReader: UserDefaultsUserStorageReader(
                 userDefaults: TemporaryUserDefaults(stringValues: [CommonUserStorageKeys.userId: "user id"])
             ),
-            tripInteractor: FixedTripInteractor(
-                createTripObservable: createTripObservable,
-                cancelTripCompletable: Completable.never()
-            ),
+            tripInteractor: tripInteractor,
             listener: listener,
             enableSeatCountSelection: enableSeatCountSelection,
             schedulerProvider: TestSchedulerProvider(scheduler: scheduler),
@@ -72,7 +78,9 @@ class DefaultPreTripViewModelTest: ReactiveTestCase {
 
         stateRecorder = scheduler.createObserver(PreTripState.self)
         viewModelUnderTest.getPreTripState()
-            .asDriver(onErrorJustReturn: .selectingPickupDropoff)
+            .asDriver(onErrorJustReturn: .selectingPickupDropoff(initialPickupLocation: nil,
+                                                                 initialDropoffLocation: nil,
+                                                                 initialFocus: .pickup))
             .drive(stateRecorder)
             .disposed(by: disposeBag)
 
@@ -81,10 +89,10 @@ class DefaultPreTripViewModelTest: ReactiveTestCase {
 
     func testInitialStateIsSelectingPickupDropoff() {
         setUp(enableSeatCountSelection: false)
-        XCTAssertRecordedElements(stateRecorder.events, [.selectingPickupDropoff])
+        XCTAssertRecordedElements(stateRecorder.events, [DefaultPreTripViewModelTest.initialPreTripState])
     }
 
-    func testSelectingPickupDropoffTransitionsToConfirmingDropoff() {
+    func testSelectingPickupDropoffTransitionsToConfirmingTrip() {
         setUp(enableSeatCountSelection: false)
         viewModelUnderTest.set(pickup: DefaultPreTripViewModelTest.pickupLocation,
                                dropoff: DefaultPreTripViewModelTest.dropoffLocation)
@@ -93,90 +101,41 @@ class DefaultPreTripViewModelTest: ReactiveTestCase {
         XCTAssertRecordedElements(
             stateRecorder.events,
             [
-                .selectingPickupDropoff,
-                .confirmingDropoff(unconfirmedPickupLocation: DefaultPreTripViewModelTest.pickupLocation,
-                                   unconfirmedDropoffLocation: DefaultPreTripViewModelTest.dropoffLocation),
+                DefaultPreTripViewModelTest.initialPreTripState,
+                .confirmingTrip(
+                    confirmedPickupLocation: DefaultPreTripViewModelTest.pickupLocation.desiredAndAssignedLocation,
+                    confirmedDropoffLocation: DefaultPreTripViewModelTest.dropoffLocation.desiredAndAssignedLocation
+                )
             ]
         )
-        XCTAssertEqual(listener.tripsCreated, [])
-        XCTAssertEqual(listener.methodCalls, [])
+        verifyNoMoreInteractions(listener)
     }
-
-    func testConfirmingDropoffTransitionsToConfirmingPickup() {
-        setUp(enableSeatCountSelection: false)
-        viewModelUnderTest.set(pickup: DefaultPreTripViewModelTest.pickupLocation,
-                               dropoff: DefaultPreTripViewModelTest.dropoffLocation)
-        viewModelUnderTest.confirmLocation(DefaultPreTripViewModelTest.confirmedDropoffLocation)
-        scheduler.start()
-
-        XCTAssertRecordedElements(
-            stateRecorder.events,
-            [
-                .selectingPickupDropoff,
-                .confirmingDropoff(unconfirmedPickupLocation: DefaultPreTripViewModelTest.pickupLocation,
-                                   unconfirmedDropoffLocation: DefaultPreTripViewModelTest.dropoffLocation),
-                .confirmingPickup(unconfirmedPickupLocation: DefaultPreTripViewModelTest.pickupLocation,
-                                  confirmedDropoffLocation: DefaultPreTripViewModelTest.confirmedDropoffLocation),
-            ]
-        )
-        XCTAssertEqual(listener.tripsCreated, [])
-        XCTAssertEqual(listener.methodCalls, [])
-    }
-
-    func testConfirmingPickupTransitionsToConfirmingTrip() {
-        setUp(enableSeatCountSelection: false)
-        viewModelUnderTest.set(pickup: DefaultPreTripViewModelTest.pickupLocation,
-                               dropoff: DefaultPreTripViewModelTest.dropoffLocation)
-        // Confirm dropoff
-        viewModelUnderTest.confirmLocation(DefaultPreTripViewModelTest.confirmedDropoffLocation)
-        // Confirm pickup
-        viewModelUnderTest.confirmLocation(DefaultPreTripViewModelTest.confirmedPickupLocation)
-        scheduler.start()
-
-        XCTAssertRecordedElements(
-            stateRecorder.events,
-            [
-                .selectingPickupDropoff,
-                .confirmingDropoff(unconfirmedPickupLocation: DefaultPreTripViewModelTest.pickupLocation,
-                                   unconfirmedDropoffLocation: DefaultPreTripViewModelTest.dropoffLocation),
-                .confirmingPickup(unconfirmedPickupLocation: DefaultPreTripViewModelTest.pickupLocation,
-                                  confirmedDropoffLocation: DefaultPreTripViewModelTest.confirmedDropoffLocation),
-                .confirmingTrip(confirmedPickupLocation: DefaultPreTripViewModelTest.confirmedPickupLocation,
-                                confirmedDropoffLocation: DefaultPreTripViewModelTest.confirmedDropoffLocation),
-            ]
-        )
-        XCTAssertEqual(listener.tripsCreated, [])
-        XCTAssertEqual(listener.methodCalls, [])
-    }
-
     func testConfirmingTripTransitionsToConfirmedAndCallsListenerOnTripCreated() {
         setUp(enableSeatCountSelection: false)
         scheduler.scheduleAt(0) {
             self.viewModelUnderTest.set(pickup: DefaultPreTripViewModelTest.pickupLocation,
                                         dropoff: DefaultPreTripViewModelTest.dropoffLocation)
-            self.viewModelUnderTest.confirmLocation(DefaultPreTripViewModelTest.confirmedDropoffLocation)
-            self.viewModelUnderTest.confirmLocation(DefaultPreTripViewModelTest.confirmedPickupLocation)
             self.viewModelUnderTest.confirmTrip(selectedVehicle: .automatic)
         }
 
         scheduler.start()
 
         XCTAssertEqual(stateRecorder.events, [
-            next(0, .selectingPickupDropoff),
-            next(1, .confirmingDropoff(unconfirmedPickupLocation: DefaultPreTripViewModelTest.pickupLocation,
-                                       unconfirmedDropoffLocation: DefaultPreTripViewModelTest.dropoffLocation)),
-            next(2, .confirmingPickup(unconfirmedPickupLocation: DefaultPreTripViewModelTest.pickupLocation,
-                                      confirmedDropoffLocation: DefaultPreTripViewModelTest.confirmedDropoffLocation)),
-            next(3, .confirmingTrip(confirmedPickupLocation: DefaultPreTripViewModelTest.confirmedPickupLocation,
-                                    confirmedDropoffLocation: DefaultPreTripViewModelTest.confirmedDropoffLocation)),
-            next(4, .confirmed(confirmedPickupLocation: DefaultPreTripViewModelTest.confirmedPickupLocation,
-                               confirmedDropoffLocation: DefaultPreTripViewModelTest.confirmedDropoffLocation,
-                               numPassengers: 1,
-                               selectedVehicle: .automatic))
+            next(0, DefaultPreTripViewModelTest.initialPreTripState),
+            next(1, .confirmingTrip(
+                confirmedPickupLocation: DefaultPreTripViewModelTest.pickupLocation.desiredAndAssignedLocation,
+                confirmedDropoffLocation: DefaultPreTripViewModelTest.dropoffLocation.desiredAndAssignedLocation
+            )),
+            next(2, .confirmed(
+                confirmedPickupLocation: DefaultPreTripViewModelTest.pickupLocation.desiredAndAssignedLocation,
+                confirmedDropoffLocation: DefaultPreTripViewModelTest.dropoffLocation.desiredAndAssignedLocation,
+                numPassengers: 1,
+                selectedVehicle: .automatic
+            ))
         ])
-
-        XCTAssertEqual(listener.tripsCreated, [DefaultPreTripViewModelTest.tripId])
-        XCTAssertEqual(listener.methodCalls, ["onTripCreated(tripId:)"])
+        
+        verify(listener, times(1)).onTripCreated(tripId: equal(to: DefaultPreTripViewModelTest.tripId))
+        verifyNoMoreInteractions(listener)
     }
 
     func testTripCreationFailureReturnsToConfirmingTripState() {
@@ -185,110 +144,52 @@ class DefaultPreTripViewModelTest: ReactiveTestCase {
 
         stateRecorder = scheduler.createObserver(PreTripState.self)
         viewModelUnderTest.getPreTripState()
-            .asDriver(onErrorJustReturn: .selectingPickupDropoff)
+            .asDriver(onErrorJustReturn: .selectingPickupDropoff(initialPickupLocation: nil,
+                                                                 initialDropoffLocation: nil,
+                                                                 initialFocus: .pickup))
             .drive(stateRecorder)
             .disposed(by: disposeBag)
 
         scheduler.scheduleAt(0) {
             self.viewModelUnderTest.set(pickup: DefaultPreTripViewModelTest.pickupLocation,
                                         dropoff: DefaultPreTripViewModelTest.dropoffLocation)
-            self.viewModelUnderTest.confirmLocation(DefaultPreTripViewModelTest.confirmedDropoffLocation)
-            self.viewModelUnderTest.confirmLocation(DefaultPreTripViewModelTest.confirmedPickupLocation)
             self.viewModelUnderTest.confirmTrip(selectedVehicle: .automatic)
         }
 
         scheduler.start()
 
         XCTAssertEqual(stateRecorder.events, [
-            next(0, .selectingPickupDropoff),
-            next(1, .confirmingDropoff(unconfirmedPickupLocation: DefaultPreTripViewModelTest.pickupLocation,
-                                       unconfirmedDropoffLocation: DefaultPreTripViewModelTest.dropoffLocation)),
-            next(2, .confirmingPickup(unconfirmedPickupLocation: DefaultPreTripViewModelTest.pickupLocation,
-                                      confirmedDropoffLocation: DefaultPreTripViewModelTest.confirmedDropoffLocation)),
-            next(3, .confirmingTrip(confirmedPickupLocation: DefaultPreTripViewModelTest.confirmedPickupLocation,
-                                    confirmedDropoffLocation: DefaultPreTripViewModelTest.confirmedDropoffLocation)),
-            next(4, .confirmed(confirmedPickupLocation: DefaultPreTripViewModelTest.confirmedPickupLocation,
-                               confirmedDropoffLocation: DefaultPreTripViewModelTest.confirmedDropoffLocation,
-                               numPassengers: 1,
-                               selectedVehicle: .automatic)),
-            next(6, .confirmingTrip(confirmedPickupLocation: DefaultPreTripViewModelTest.confirmedPickupLocation,
-                                    confirmedDropoffLocation: DefaultPreTripViewModelTest.confirmedDropoffLocation))
+            next(0, DefaultPreTripViewModelTest.initialPreTripState),
+            next(1, .confirmingTrip(
+                confirmedPickupLocation: DefaultPreTripViewModelTest.pickupLocation.desiredAndAssignedLocation,
+                confirmedDropoffLocation: DefaultPreTripViewModelTest.dropoffLocation.desiredAndAssignedLocation
+            )),
+            next(2, .confirmed(
+                confirmedPickupLocation: DefaultPreTripViewModelTest.pickupLocation.desiredAndAssignedLocation,
+                confirmedDropoffLocation: DefaultPreTripViewModelTest.dropoffLocation.desiredAndAssignedLocation,
+                numPassengers: 1,
+                selectedVehicle: .automatic
+            )),
+            next(4, .confirmingTrip(
+                confirmedPickupLocation: DefaultPreTripViewModelTest.pickupLocation.desiredAndAssignedLocation,
+                confirmedDropoffLocation: DefaultPreTripViewModelTest.dropoffLocation.desiredAndAssignedLocation
+            ))
         ])
 
-        XCTAssertEqual(listener.tripsCreated, [])
-        XCTAssertEqual(listener.methodCalls, [])
+        verifyNoMoreInteractions(listener)
     }
 
     func testCancelInvokesCancelOnListener() {
         setUp(enableSeatCountSelection: false)
         viewModelUnderTest.cancelSetPickupDropoff()
-        XCTAssertEqual(listener.methodCalls, ["cancelPreTrip()"])
+        verify(listener, times(1)).cancelPreTrip()
     }
 
-    func testCancelConfirmLocationWhileConfirmingDropoffTransitionsToSelectingPickupDropoff() {
+    func testCancelConfirmTripTransitionsToSelectingPickupDropoffWithExpectedState() {
         setUp(enableSeatCountSelection: false)
         scheduler.scheduleAt(1, action: {
             self.viewModelUnderTest.set(pickup: DefaultPreTripViewModelTest.pickupLocation,
                                         dropoff: DefaultPreTripViewModelTest.dropoffLocation)
-        })
-        scheduler.scheduleAt(2, action: {
-            self.viewModelUnderTest.cancelConfirmLocation()
-        })
-        scheduler.start()
-
-        XCTAssertEqual(
-            stateRecorder.events,
-            [
-                next(0, .selectingPickupDropoff),
-                next(2, .confirmingDropoff(unconfirmedPickupLocation: DefaultPreTripViewModelTest.pickupLocation,
-                                           unconfirmedDropoffLocation: DefaultPreTripViewModelTest.dropoffLocation)),
-                next(3, .selectingPickupDropoff)
-            ]
-        )
-        XCTAssertEqual(listener.tripsCreated, [])
-        XCTAssertEqual(listener.methodCalls, [])
-    }
-
-    func testCancelConfirmLocationWhileConfirmingPickupTransitionsToSelectingPickupDropoff() {
-        setUp(enableSeatCountSelection: false)
-        scheduler.scheduleAt(1, action: {
-            self.viewModelUnderTest.set(pickup: DefaultPreTripViewModelTest.pickupLocation,
-                                        dropoff: DefaultPreTripViewModelTest.dropoffLocation)
-        })
-        scheduler.scheduleAt(2, action: {
-            self.viewModelUnderTest.confirmLocation(DefaultPreTripViewModelTest.confirmedDropoffLocation)
-        })
-        scheduler.scheduleAt(3, action: {
-            self.viewModelUnderTest.cancelConfirmLocation()
-        })
-        scheduler.start()
-
-        XCTAssertEqual(
-            stateRecorder.events,
-            [
-                next(0, .selectingPickupDropoff),
-                next(2, .confirmingDropoff(unconfirmedPickupLocation: DefaultPreTripViewModelTest.pickupLocation,
-                                           unconfirmedDropoffLocation: DefaultPreTripViewModelTest.dropoffLocation)),
-                next(3, .confirmingPickup(unconfirmedPickupLocation: DefaultPreTripViewModelTest.pickupLocation,
-                                          confirmedDropoffLocation: DefaultPreTripViewModelTest.confirmedDropoffLocation)),
-                next(4, .selectingPickupDropoff)
-            ]
-        )
-        XCTAssertEqual(listener.tripsCreated, [])
-        XCTAssertEqual(listener.methodCalls, [])
-    }
-
-    func testCancelConfirmTripTransitionsToSelectingPickupDropoff() {
-        setUp(enableSeatCountSelection: false)
-        scheduler.scheduleAt(1, action: {
-            self.viewModelUnderTest.set(pickup: DefaultPreTripViewModelTest.pickupLocation,
-                                        dropoff: DefaultPreTripViewModelTest.dropoffLocation)
-        })
-        scheduler.scheduleAt(2, action: {
-            self.viewModelUnderTest.confirmLocation(DefaultPreTripViewModelTest.confirmedDropoffLocation)
-        })
-        scheduler.scheduleAt(3, action: {
-            self.viewModelUnderTest.confirmLocation(DefaultPreTripViewModelTest.confirmedPickupLocation)
         })
         scheduler.scheduleAt(4, action: {
             self.viewModelUnderTest.cancelConfirmTrip()
@@ -298,134 +199,39 @@ class DefaultPreTripViewModelTest: ReactiveTestCase {
         XCTAssertEqual(
             stateRecorder.events,
             [
-                next(0, .selectingPickupDropoff),
-                next(2, .confirmingDropoff(unconfirmedPickupLocation: DefaultPreTripViewModelTest.pickupLocation,
-                                           unconfirmedDropoffLocation: DefaultPreTripViewModelTest.dropoffLocation)),
-                next(3, .confirmingPickup(unconfirmedPickupLocation: DefaultPreTripViewModelTest.pickupLocation,
-                                          confirmedDropoffLocation: DefaultPreTripViewModelTest.confirmedDropoffLocation)),
-                next(4, .confirmingTrip(confirmedPickupLocation: DefaultPreTripViewModelTest.confirmedPickupLocation,
-                                        confirmedDropoffLocation: DefaultPreTripViewModelTest.confirmedDropoffLocation)),
-                next(5, .selectingPickupDropoff)
+                next(0, DefaultPreTripViewModelTest.initialPreTripState),
+                next(2, .confirmingTrip(
+                    confirmedPickupLocation: DefaultPreTripViewModelTest.pickupLocation.desiredAndAssignedLocation,
+                    confirmedDropoffLocation: DefaultPreTripViewModelTest.dropoffLocation.desiredAndAssignedLocation
+                )),
+                next(5, .selectingPickupDropoff(
+                    initialPickupLocation: PreTripLocation(
+                        desiredAndAssignedLocation: DefaultPreTripViewModelTest.pickupLocation.desiredAndAssignedLocation,
+                        wasConfirmed: true
+                    ),
+                    initialDropoffLocation: PreTripLocation(
+                        desiredAndAssignedLocation: DefaultPreTripViewModelTest.dropoffLocation.desiredAndAssignedLocation,
+                        wasConfirmed: true
+                    ),
+                    initialFocus: .dropoff
+                ))
             ]
         )
-        XCTAssertEqual(listener.tripsCreated, [])
-        XCTAssertEqual(listener.methodCalls, [])
+        verifyNoMoreInteractions(listener)
     }
 
     func testCancelTripRequestCallsCancelPreTripOnListener() {
         setUp(enableSeatCountSelection: false)
         viewModelUnderTest.cancelTripRequest()
-        XCTAssertEqual(listener.methodCalls, ["cancelPreTrip()"])
-    }
-
-    func testPickupAndDropoffBothSetOnMapSkipsPickupAndDropoffConfirmation() {
-        setUp(enableSeatCountSelection: false)
-        scheduler.scheduleAt(1, action: {
-            self.viewModelUnderTest.set(
-                pickup: PreTripLocation(
-                    desiredAndAssignedLocation: DefaultPreTripViewModelTest.pickupLocation.desiredAndAssignedLocation,
-                    wasSetOnMap: true
-                ),
-                dropoff: PreTripLocation(
-                    desiredAndAssignedLocation: DefaultPreTripViewModelTest.dropoffLocation.desiredAndAssignedLocation,
-                    wasSetOnMap: true
-                )
-            )
-        })
-
-        scheduler.start()
-
-        XCTAssertEqual(
-            stateRecorder.events,
-            [
-                next(0, .selectingPickupDropoff),
-                next(
-                    2,
-                    .confirmingTrip(
-                        confirmedPickupLocation: DefaultPreTripViewModelTest.pickupLocation.desiredAndAssignedLocation,
-                        confirmedDropoffLocation: DefaultPreTripViewModelTest.dropoffLocation.desiredAndAssignedLocation
-                    )
-                ),
-            ]
-        )
-    }
-
-    func testDropoffSetOnMapSkipsDropoffConfirmation() {
-        setUp(enableSeatCountSelection: false)
-        let dropoffLocation = PreTripLocation(
-            desiredAndAssignedLocation: DefaultPreTripViewModelTest.dropoffLocation.desiredAndAssignedLocation,
-            wasSetOnMap: true
-        )
-        scheduler.scheduleAt(1, action: {
-            self.viewModelUnderTest.set(pickup: DefaultPreTripViewModelTest.pickupLocation, dropoff: dropoffLocation)
-        })
-
-        scheduler.start()
-
-        XCTAssertEqual(
-            stateRecorder.events,
-            [
-                next(0, .selectingPickupDropoff),
-                next(
-                    2,
-                    .confirmingPickup(
-                        unconfirmedPickupLocation: DefaultPreTripViewModelTest.pickupLocation,
-                        confirmedDropoffLocation: dropoffLocation.desiredAndAssignedLocation
-                    )
-                ),
-            ]
-        )
-    }
-
-    func testPickupSetOnMapSkipsPickupConfirmation() {
-        setUp(enableSeatCountSelection: false)
-        let pickupLocation = PreTripLocation(
-            desiredAndAssignedLocation: DefaultPreTripViewModelTest.pickupLocation.desiredAndAssignedLocation,
-            wasSetOnMap: true
-        )
-        scheduler.scheduleAt(1, action: {
-            self.viewModelUnderTest.set(pickup: pickupLocation, dropoff: DefaultPreTripViewModelTest.dropoffLocation)
-        })
-        scheduler.scheduleAt(2, action: {
-            self.viewModelUnderTest.confirmLocation(DefaultPreTripViewModelTest.dropoffLocation.desiredAndAssignedLocation)
-        })
-
-        scheduler.start()
-
-        XCTAssertEqual(
-            stateRecorder.events,
-            [
-                next(0, .selectingPickupDropoff),
-                next(
-                    2,
-                    .confirmingDropoff(
-                        unconfirmedPickupLocation: pickupLocation,
-                        unconfirmedDropoffLocation: DefaultPreTripViewModelTest.dropoffLocation
-                    )
-                ),
-                next(
-                    3,
-                    .confirmingTrip(
-                        confirmedPickupLocation: pickupLocation.desiredAndAssignedLocation,
-                        confirmedDropoffLocation: DefaultPreTripViewModelTest.dropoffLocation.desiredAndAssignedLocation
-                    )
-                ),
-            ]
-        )
+        verify(listener, times(1)).cancelPreTrip()
     }
 
     func testConfirmingTripWithSeatCountSelectionEnabledTransitionsToConfirmingSeatsState() {
         setUp(enableSeatCountSelection: true)
         scheduler.scheduleAt(1) {
             self.viewModelUnderTest.set(
-                pickup: PreTripLocation(
-                    desiredAndAssignedLocation: DefaultPreTripViewModelTest.pickupLocation.desiredAndAssignedLocation,
-                    wasSetOnMap: true
-                ),
-                dropoff: PreTripLocation(
-                    desiredAndAssignedLocation: DefaultPreTripViewModelTest.dropoffLocation.desiredAndAssignedLocation,
-                    wasSetOnMap: true
-                )
+                pickup: DefaultPreTripViewModelTest.pickupLocation,
+                dropoff: DefaultPreTripViewModelTest.dropoffLocation
             )
             self.viewModelUnderTest.confirmTrip(selectedVehicle: .automatic)
         }
@@ -434,7 +240,7 @@ class DefaultPreTripViewModelTest: ReactiveTestCase {
         XCTAssertEqual(
             stateRecorder.events,
             [
-                next(0, .selectingPickupDropoff),
+                next(0, DefaultPreTripViewModelTest.initialPreTripState),
                 next(
                     2,
                     .confirmingTrip(
@@ -459,14 +265,8 @@ class DefaultPreTripViewModelTest: ReactiveTestCase {
         setUp(enableSeatCountSelection: true)
         scheduler.scheduleAt(1) {
             self.viewModelUnderTest.set(
-                pickup: PreTripLocation(
-                    desiredAndAssignedLocation: DefaultPreTripViewModelTest.pickupLocation.desiredAndAssignedLocation,
-                    wasSetOnMap: true
-                ),
-                dropoff: PreTripLocation(
-                    desiredAndAssignedLocation: DefaultPreTripViewModelTest.dropoffLocation.desiredAndAssignedLocation,
-                    wasSetOnMap: true
-                )
+                pickup: DefaultPreTripViewModelTest.pickupLocation,
+                dropoff: DefaultPreTripViewModelTest.dropoffLocation
             )
             self.viewModelUnderTest.confirmTrip(selectedVehicle: .automatic)
             self.viewModelUnderTest.confirm(seatCount: seatCount)
@@ -477,7 +277,7 @@ class DefaultPreTripViewModelTest: ReactiveTestCase {
         XCTAssertEqual(
             stateRecorder.events,
             [
-                next(0, .selectingPickupDropoff),
+                next(0, DefaultPreTripViewModelTest.initialPreTripState),
                 next(
                     2,
                     .confirmingTrip(
@@ -504,18 +304,5 @@ class DefaultPreTripViewModelTest: ReactiveTestCase {
                 )
             ]
         )
-    }
-}
-
-class RecordingPreTripListener: MethodCallRecorder, PreTripListener {
-    var tripsCreated: [String] = []
-
-    func onTripCreated(tripId: String) {
-        tripsCreated.append(tripId)
-        recordMethodCall(#function)
-    }
-
-    func cancelPreTrip() {
-        recordMethodCall(#function)
     }
 }

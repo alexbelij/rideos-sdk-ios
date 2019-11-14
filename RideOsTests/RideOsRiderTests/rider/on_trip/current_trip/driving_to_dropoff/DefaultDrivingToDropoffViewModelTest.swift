@@ -71,7 +71,7 @@ class DefaultDrivingToDropoffViewModelTest: ReactiveTestCase {
     
     func testViewModelProducesExpectedEventsOnInitialization() {
         setUp(initialPassengerState: passengerStateModels[0])
-        guard case RiderTripStateModel.drivingToDropoff(_,
+        guard case RiderTripStateModel.drivingToDropoff(let pickup,
                                                         let dropoff,
                                                         let route,
                                                         let vehiclePosition,
@@ -103,7 +103,9 @@ class DefaultDrivingToDropoffViewModelTest: ReactiveTestCase {
                     status: expectedStatusPrefix + String.timeOfDayLabelFrom(startDate: currentDateProvider(),
                                                                              interval: route.travelTime),
                     nextWaypoint: dropoff.displayName,
-                    vehicleInfo: vehicleInfo
+                    vehicleInfo: vehicleInfo,
+                    pickupLabel: pickup.displayName,
+                    dropoffLabel: dropoff.displayName
                 )
             )
         ])
@@ -117,7 +119,7 @@ class DefaultDrivingToDropoffViewModelTest: ReactiveTestCase {
         
         scheduler.advanceTo(1)
         
-        guard case RiderTripStateModel.drivingToDropoff(_,
+        guard case RiderTripStateModel.drivingToDropoff(let pickup,
                                                         let dropoff,
                                                         let route,
                                                         let vehiclePosition,
@@ -125,7 +127,7 @@ class DefaultDrivingToDropoffViewModelTest: ReactiveTestCase {
                                                         _) = passengerStateModels[0] else {
                                                             fatalError("Unexpected PassengerStateModel case")
         }
-        guard case RiderTripStateModel.drivingToDropoff(_,
+        guard case RiderTripStateModel.drivingToDropoff(let pickup1,
                                                         let dropoff1,
                                                         let route1,
                                                         let vehiclePosition1,
@@ -165,7 +167,9 @@ class DefaultDrivingToDropoffViewModelTest: ReactiveTestCase {
                     status: expectedStatusPrefix + String.timeOfDayLabelFrom(startDate: currentDateProvider(),
                                                                              interval: route.travelTime),
                     nextWaypoint: dropoff.displayName,
-                    vehicleInfo: vehicleInfo
+                    vehicleInfo: vehicleInfo,
+                    pickupLabel: pickup.displayName,
+                    dropoffLabel: dropoff.displayName
                 )
             ),
             .next(
@@ -174,7 +178,9 @@ class DefaultDrivingToDropoffViewModelTest: ReactiveTestCase {
                     status: expectedStatusPrefix + String.timeOfDayLabelFrom(startDate: currentDateProvider(),
                                                                              interval: route1.travelTime),
                     nextWaypoint: dropoff1.displayName,
-                    vehicleInfo: vehicleInfo1
+                    vehicleInfo: vehicleInfo1,
+                    pickupLabel: pickup1.displayName,
+                    dropoffLabel: dropoff1.displayName
                 )
             )
         ])

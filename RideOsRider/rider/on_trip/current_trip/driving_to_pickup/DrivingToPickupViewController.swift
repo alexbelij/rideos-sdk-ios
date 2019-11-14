@@ -18,7 +18,13 @@ import RideOsCommon
 import RxSwift
 
 public class DrivingToPickupViewController: MatchedToVehicleViewController {
-    private let dialogView = BeforePickupDialog()
+    private let dialogView = MatchedToVehicleDialog(
+        cancelButtonTitle: RideOsRiderResourceLoader.instance.getString(
+            "ai.rideos.rider.on-trip.driving-to-pickup.cancel-button-title"
+        ),
+        showEditPickupButton: true,
+        showEditDropoffButton: true
+    )
     private let disposeBag = DisposeBag()
 
     public required init?(coder _: NSCoder) {
@@ -29,16 +35,14 @@ public class DrivingToPickupViewController: MatchedToVehicleViewController {
                 passengerState: RiderTripStateModel,
                 cancelListener: @escaping () -> Void,
                 editPickupListener: @escaping () -> Void,
+                editDropoffListener: @escaping () -> Void,
                 schedulerProvider: SchedulerProvider = DefaultSchedulerProvider()) {
         super.init(dialogView: dialogView,
                    mapViewController: mapViewController,
                    viewModel: DefaultDrivingToPickupViewModel(initialPassengerState: passengerState),
                    cancelListener: cancelListener,
+                   editPickupListener: editPickupListener,
+                   editDropoffListener: editDropoffListener,
                    schedulerProvider: schedulerProvider)
-
-        dialogView.editButtonTapEvents
-            .observeOn(schedulerProvider.mainThread())
-            .subscribe(onNext: editPickupListener)
-            .disposed(by: disposeBag)
     }
 }

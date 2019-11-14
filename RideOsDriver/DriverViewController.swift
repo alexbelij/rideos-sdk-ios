@@ -27,4 +27,11 @@ public class DriverViewController: StartupViewController {
     public override func createMainViewController(_: String) -> (AuthenticatedUIViewController) {
         return MainViewController()
     }
+
+    public override func viewDidLoad() {
+        super.viewDidLoad()
+        if #available(iOS 13.0, *) {
+            overrideUserInterfaceStyle = .light
+        }
+    }
 }

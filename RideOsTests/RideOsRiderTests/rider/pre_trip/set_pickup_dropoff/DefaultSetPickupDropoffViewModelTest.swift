@@ -1,4 +1,5 @@
 import CoreLocation
+import Cuckoo
 import Foundation
 import RideOsCommon
 import RideOsTestHelpers
@@ -14,7 +15,12 @@ class DefaultSetPickupDropoffViewModelTest: ReactiveTestCase {
                 displayName: "pickup"
             )
         ),
-        wasSetOnMap: false
+        wasConfirmed: false
+    )
+    
+    private static let confirmedPickup = PreTripLocation(
+        desiredAndAssignedLocation: DefaultSetPickupDropoffViewModelTest.pickup.desiredAndAssignedLocation,
+        wasConfirmed: true
     )
 
     private static let dropoff = PreTripLocation(
@@ -24,71 +30,103 @@ class DefaultSetPickupDropoffViewModelTest: ReactiveTestCase {
                 displayName: "dropoff"
             )
         ),
-        wasSetOnMap: false
+        wasConfirmed: false
+    )
+    
+    private static let confirmedDropoff = PreTripLocation(
+        desiredAndAssignedLocation: DefaultSetPickupDropoffViewModelTest.dropoff.desiredAndAssignedLocation,
+        wasConfirmed: true
+    )
+
+    private static let enablePickupSearch = true
+    private static let enableDropoffSearch = true
+    private static let expectedSearchingForPickupDropoffState =
+        SetPickupDropOffDisplayState.Step.searchingForPickupDropoff(
+            enablePickupSearch: DefaultSetPickupDropoffViewModelTest.enablePickupSearch,
+            enableDropoffSearch: DefaultSetPickupDropoffViewModelTest.enableDropoffSearch
     )
 
     var viewModelUnderTest: DefaultSetPickupDropoffViewModel!
-    var listener: RecordingSetPickupDropoffListener!
+    var listener: MockSetPickupDropoffListener!
     var recorder: TestableObserver<SetPickupDropOffDisplayState>!
-    
-    func setUp(initialPickup: PreTripLocation?, initialDropoff: PreTripLocation?) {
+
+    func setUp(initialPickup: PreTripLocation?,
+               initialDropoff: PreTripLocation?,
+               initialFocus: LocationSearchFocusType) {
         super.setUp()
-        listener = RecordingSetPickupDropoffListener()
-        viewModelUnderTest = DefaultSetPickupDropoffViewModel(listener: listener,
-                                                     initialPickup: initialPickup,
-                                                     initialDropoff: initialDropoff,
-                                                     schedulerProvider: TestSchedulerProvider(scheduler: scheduler),
-                                                     logger: ConsoleLogger())
-        recorder = scheduler.createObserver(SetPickupDropOffDisplayState.self)
         
+        listener = MockSetPickupDropoffListener()
+        stub(listener) { stub in
+            when(stub.cancelSetPickupDropoff()).thenDoNothing()
+            when(stub.set(pickup: any(), dropoff: any())).thenDoNothing()
+        }
+        
+        viewModelUnderTest = DefaultSetPickupDropoffViewModel(
+            listener: listener,
+            initialPickup: initialPickup,
+            initialDropoff: initialDropoff,
+            initialFocus: initialFocus,
+            enablePickupSearch: DefaultSetPickupDropoffViewModelTest.enablePickupSearch,
+            enableDropoffSearch: DefaultSetPickupDropoffViewModelTest.enableDropoffSearch,
+            schedulerProvider: TestSchedulerProvider(scheduler: scheduler),
+            logger: ConsoleLogger()
+        )
+        recorder = scheduler.createObserver(SetPickupDropOffDisplayState.self)
+
         viewModelUnderTest.getDisplayState()
-            .asDriver(onErrorJustReturn: SetPickupDropOffDisplayState(step: .searchingForPickupDropoff,
-                                                                      pickup: nil,
-                                                                      dropoff: nil))
+            .asDriver(onErrorJustReturn: SetPickupDropOffDisplayState(
+                step: DefaultSetPickupDropoffViewModelTest.expectedSearchingForPickupDropoffState,
+                pickup: nil,
+                dropoff: nil,
+                focus: .none
+            ))
             .drive(recorder)
             .disposed(by: disposeBag)
-        
+
         assertNil(viewModelUnderTest, after: { self.viewModelUnderTest = nil })
     }
-    
+
     func testInitialSetPickupDropOffDisplayStateWithNoInitialPickupOrDropoffMatchesExpectedState() {
-        setUp(initialPickup: nil, initialDropoff: nil)
+        setUp(initialPickup: nil, initialDropoff: nil, initialFocus: .dropoff)
 
         scheduler.start()
 
         XCTAssertEqual(recorder.events, [
-            next(0, SetPickupDropOffDisplayState(step: .searchingForPickupDropoff, pickup: nil, dropoff: nil))
+            next(0, SetPickupDropOffDisplayState(
+                step: DefaultSetPickupDropoffViewModelTest.expectedSearchingForPickupDropoffState,
+                pickup: nil,
+                dropoff: nil,
+                focus: .dropoff
+            ))
         ])
 
-        XCTAssertNil(listener.pickup)
-        XCTAssertNil(listener.dropoff)
-        XCTAssertEqual(listener.methodCalls, [])
+        verifyNoMoreInteractions(listener)
     }
 
     func testInitialSetPickupDropOffDisplayStateWithInitialPickupAndDropoffMatchesExpectedState() {
         setUp(initialPickup: DefaultSetPickupDropoffViewModelTest.pickup,
-              initialDropoff: DefaultSetPickupDropoffViewModelTest.dropoff)
+              initialDropoff: DefaultSetPickupDropoffViewModelTest.dropoff,
+              initialFocus: .dropoff)
 
         scheduler.start()
 
         XCTAssertEqual(recorder.events, [
             next(0,
                  SetPickupDropOffDisplayState(
-                    step: .searchingForPickupDropoff,
-                    pickup: DefaultSetPickupDropoffViewModelTest.pickup.desiredAndAssignedLocation,
-                    dropoff: DefaultSetPickupDropoffViewModelTest.dropoff.desiredAndAssignedLocation
+                    step: DefaultSetPickupDropoffViewModelTest.expectedSearchingForPickupDropoffState,
+                    pickup: DefaultSetPickupDropoffViewModelTest.pickup,
+                    dropoff: DefaultSetPickupDropoffViewModelTest.dropoff,
+                    focus: .dropoff
                 )
             )
         ])
-
-        XCTAssertNil(listener.pickup)
-        XCTAssertNil(listener.dropoff)
-        XCTAssertEqual(listener.methodCalls, [])
-    }
-    
-    func testSettingPickupTransitionsToExpectedSetPickupDropoffDisplayState() {
-        setUp(initialPickup: nil, initialDropoff: nil)
         
+        verifyNoMoreInteractions(listener)
+    }
+
+    func testSettingPickupTransitionsToExpectedSetPickupDropoffDisplayState() {
+        setUp(initialPickup: nil, initialDropoff: nil, initialFocus: .pickup)
+
         scheduler.scheduleAt(1) {
             self.viewModelUnderTest.selectPickup(
                 DefaultSetPickupDropoffViewModelTest
@@ -99,22 +137,28 @@ class DefaultSetPickupDropoffViewModelTest: ReactiveTestCase {
             )
         }
         scheduler.start()
-        
-        XCTAssertEqual(recorder.events, [
-            next(0, SetPickupDropOffDisplayState(step: .searchingForPickupDropoff, pickup: nil, dropoff: nil)),
-            next(2, SetPickupDropOffDisplayState(step: .searchingForPickupDropoff,
-                                                 pickup: DefaultSetPickupDropoffViewModelTest.pickup.desiredAndAssignedLocation,
-                                                 dropoff: nil))
-        ])
 
-        XCTAssertNil(listener.pickup)
-        XCTAssertNil(listener.dropoff)
-        XCTAssertEqual(listener.methodCalls, [])
-    }
-    
-    func testSettingDropoffTransitionsToExpectedSetPickupDropoffDisplayState() {
-        setUp(initialPickup: nil, initialDropoff: nil)
+        XCTAssertEqual(recorder.events, [
+            next(0, SetPickupDropOffDisplayState(
+                step: DefaultSetPickupDropoffViewModelTest.expectedSearchingForPickupDropoffState,
+                pickup: nil,
+                dropoff: nil,
+                focus: .pickup
+            )),
+            next(2, SetPickupDropOffDisplayState(
+                step: DefaultSetPickupDropoffViewModelTest.expectedSearchingForPickupDropoffState,
+                pickup: DefaultSetPickupDropoffViewModelTest.pickup,
+                dropoff: nil,
+                focus: .dropoff
+            ))
+        ])
         
+        verifyNoMoreInteractions(listener)
+    }
+
+    func testSettingDropoffTransitionsToExpectedSetPickupDropoffDisplayState() {
+        setUp(initialPickup: nil, initialDropoff: nil, initialFocus: .dropoff)
+
         scheduler.scheduleAt(1) {
             self.viewModelUnderTest.selectDropoff(
                 DefaultSetPickupDropoffViewModelTest
@@ -125,22 +169,28 @@ class DefaultSetPickupDropoffViewModelTest: ReactiveTestCase {
             )
         }
         scheduler.start()
-        
+
         XCTAssertEqual(recorder.events, [
-            next(0, SetPickupDropOffDisplayState(step: .searchingForPickupDropoff, pickup: nil, dropoff: nil)),
-            next(2, SetPickupDropOffDisplayState(step: .searchingForPickupDropoff,
-                                                 pickup: nil,
-                                                 dropoff: DefaultSetPickupDropoffViewModelTest.dropoff.desiredAndAssignedLocation))
-            ])
-        
-        XCTAssertNil(listener.pickup)
-        XCTAssertNil(listener.dropoff)
-        XCTAssertEqual(listener.methodCalls, [])
+            next(0, SetPickupDropOffDisplayState(
+                step: DefaultSetPickupDropoffViewModelTest.expectedSearchingForPickupDropoffState,
+                pickup: nil,
+                dropoff: nil,
+                focus: .dropoff
+            )),
+            next(2, SetPickupDropOffDisplayState(
+                step: DefaultSetPickupDropoffViewModelTest.expectedSearchingForPickupDropoffState,
+                pickup: nil,
+                dropoff: DefaultSetPickupDropoffViewModelTest.dropoff,
+                focus: .pickup
+            ))
+        ])
+
+        verifyNoMoreInteractions(listener)
     }
-    
+
     func testSettingPickupOnMapConfirmingAndThenSelectingDropoffTransitionsToExpectedSetPickupDropoffDisplayState() {
-        setUp(initialPickup: nil, initialDropoff: nil)
-        
+        setUp(initialPickup: nil, initialDropoff: nil, initialFocus: .pickup)
+
         scheduler.scheduleAt(1) {
             self.viewModelUnderTest.setPickupOnMap()
         }
@@ -160,98 +210,162 @@ class DefaultSetPickupDropoffViewModelTest: ReactiveTestCase {
         }
 
         scheduler.start()
-        
+
         XCTAssertEqual(recorder.events, [
-            next(0, SetPickupDropOffDisplayState(step: .searchingForPickupDropoff, pickup: nil, dropoff: nil)),
-            next(1, SetPickupDropOffDisplayState(step: .settingPickupOnMap, pickup: nil, dropoff: nil)),
+            next(0, SetPickupDropOffDisplayState(
+                step: DefaultSetPickupDropoffViewModelTest.expectedSearchingForPickupDropoffState,
+                pickup: nil,
+                dropoff: nil,
+                focus: .pickup
+            )),
+            next(1, SetPickupDropOffDisplayState(step: .settingPickupOnMap,
+                                                 pickup: nil,
+                                                 dropoff: nil,
+                                                 focus: .pickup)),
             next(3, SetPickupDropOffDisplayState(step: .settingPickupOnMap,
-                                                 pickup: DefaultSetPickupDropoffViewModelTest.pickup.desiredAndAssignedLocation,
-                                                 dropoff: nil)),
-            next(4, SetPickupDropOffDisplayState(step: .searchingForPickupDropoff,
-                                                 pickup: DefaultSetPickupDropoffViewModelTest.pickup.desiredAndAssignedLocation,
-                                                 dropoff: nil)),
-            next(4, SetPickupDropOffDisplayState(step: .searchingForPickupDropoff,
-                                                 pickup: DefaultSetPickupDropoffViewModelTest.pickup.desiredAndAssignedLocation,
-                                                 dropoff: DefaultSetPickupDropoffViewModelTest.dropoff.desiredAndAssignedLocation)),
+                                                 pickup: DefaultSetPickupDropoffViewModelTest.confirmedPickup,
+                                                 dropoff: nil,
+                                                 focus: .dropoff)),
+            next(4, SetPickupDropOffDisplayState(
+                step: DefaultSetPickupDropoffViewModelTest.expectedSearchingForPickupDropoffState,
+                pickup: DefaultSetPickupDropoffViewModelTest.confirmedPickup,
+                dropoff: nil,
+                focus: .dropoff
+            )),
+            next(4, SetPickupDropOffDisplayState(
+                step: DefaultSetPickupDropoffViewModelTest.expectedSearchingForPickupDropoffState,
+                pickup: DefaultSetPickupDropoffViewModelTest.confirmedPickup,
+                dropoff: DefaultSetPickupDropoffViewModelTest.dropoff,
+                focus: .dropoff
+            )),
+            next(5, SetPickupDropOffDisplayState(
+                step: .confirmingDropoff,
+                pickup: DefaultSetPickupDropoffViewModelTest.confirmedPickup,
+                dropoff: DefaultSetPickupDropoffViewModelTest.dropoff,
+                focus: .dropoff
+            ))
         ])
-        
-        XCTAssertEqual(
-            listener.pickup,
-            PreTripLocation(
-                desiredAndAssignedLocation: DefaultSetPickupDropoffViewModelTest.pickup.desiredAndAssignedLocation,
-                wasSetOnMap: true
-            )
-        )
-        XCTAssertEqual(listener.dropoff, DefaultSetPickupDropoffViewModelTest.dropoff)
-        XCTAssertEqual(listener.methodCalls, ["set(pickup:dropoff:)"])
+
+        verifyNoMoreInteractions(listener)
     }
-    
-    func testSettingDropoffOnMapAndThenConfirmingTransitionsToExpectedSetPickupDropoffDisplayStateAndNotifiesListener() {
-        setUp(initialPickup: DefaultSetPickupDropoffViewModelTest.pickup, initialDropoff: nil)
-        
+
+    func testSettingDropoffOnMapAndThenConfirmingTransitionsToConfirmingPickup() {
+        setUp(initialPickup: DefaultSetPickupDropoffViewModelTest.pickup, initialDropoff: nil, initialFocus: .dropoff)
+
         scheduler.scheduleAt(1) { self.viewModelUnderTest.setDropoffOnMap() }
         scheduler.scheduleAt(2) {
             self.viewModelUnderTest
                 .confirmLocation(DefaultSetPickupDropoffViewModelTest.dropoff.desiredAndAssignedLocation)
         }
         scheduler.start()
-        
+
         XCTAssertEqual(recorder.events, [
-            next(0, SetPickupDropOffDisplayState(step: .searchingForPickupDropoff,
-                                                 pickup: DefaultSetPickupDropoffViewModelTest.pickup.desiredAndAssignedLocation,
-                                                 dropoff: nil)),
-            next(1, SetPickupDropOffDisplayState(step: .settingDropoffOnMap,
-                                                 pickup: DefaultSetPickupDropoffViewModelTest.pickup.desiredAndAssignedLocation,
-                                                 dropoff: nil)),
-            next(3, SetPickupDropOffDisplayState(step: .settingDropoffOnMap,
-                                                 pickup: DefaultSetPickupDropoffViewModelTest.pickup.desiredAndAssignedLocation,
-                                                 dropoff: DefaultSetPickupDropoffViewModelTest.dropoff.desiredAndAssignedLocation)),
+            next(0, SetPickupDropOffDisplayState(
+                step: DefaultSetPickupDropoffViewModelTest.expectedSearchingForPickupDropoffState,
+                pickup: DefaultSetPickupDropoffViewModelTest.pickup,
+                dropoff: nil,
+                focus: .dropoff
+            )),
+            next(1, SetPickupDropOffDisplayState(
+                step: .settingDropoffOnMap,
+                pickup: DefaultSetPickupDropoffViewModelTest.pickup,
+                dropoff: nil,
+                focus: .dropoff
+            )),
+            next(3, SetPickupDropOffDisplayState(
+                step: .settingDropoffOnMap,
+                pickup: DefaultSetPickupDropoffViewModelTest.pickup,
+                dropoff: DefaultSetPickupDropoffViewModelTest.confirmedDropoff,
+                focus: .dropoff
+            )),
+            next(4, SetPickupDropOffDisplayState(
+                step: .confirmingPickup,
+                pickup: DefaultSetPickupDropoffViewModelTest.pickup,
+                dropoff: DefaultSetPickupDropoffViewModelTest.confirmedDropoff,
+                focus: .dropoff
+            )),
         ])
         
-        XCTAssertEqual(listener.pickup, DefaultSetPickupDropoffViewModelTest.pickup)
-        XCTAssertEqual(
-            listener.dropoff,
-            PreTripLocation(
-                desiredAndAssignedLocation: DefaultSetPickupDropoffViewModelTest.dropoff.desiredAndAssignedLocation,
-                wasSetOnMap: true
-            )
-        )
-        XCTAssertEqual(listener.methodCalls, ["set(pickup:dropoff:)"])
+        verifyNoMoreInteractions(listener)
     }
-    
+
     func testCancellingLocationSearchCallsCancelSetPickupDropoffOnListener() {
-        setUp(initialPickup: nil, initialDropoff: nil)
+        setUp(initialPickup: nil, initialDropoff: nil, initialFocus: .dropoff)
         scheduler.scheduleAt(1, action: { self.viewModelUnderTest.cancelLocationSearch() })
         scheduler.start()
-        
-        XCTAssertNil(listener.pickup)
-        XCTAssertNil(listener.dropoff)
-        XCTAssertEqual(listener.methodCalls, ["cancelSetPickupDropoff()"])
+
+        verify(listener, times(1)).cancelSetPickupDropoff()
+        verifyNoMoreInteractions(listener)
     }
-    
-    func testDoneSearchingCallsSetPickupDropoffOnListener() {
-        setUp(initialPickup: DefaultSetPickupDropoffViewModelTest.pickup,
-              initialDropoff: DefaultSetPickupDropoffViewModelTest.dropoff)
+
+    func testDoneSearchingWithConfirmedLocationsCallsSetPickupDropoffOnListener() {
+        setUp(initialPickup: DefaultSetPickupDropoffViewModelTest.confirmedPickup,
+              initialDropoff: DefaultSetPickupDropoffViewModelTest.confirmedDropoff,
+              initialFocus: .dropoff)
         scheduler.scheduleAt(1, action: { self.viewModelUnderTest.doneSearching() })
         scheduler.start()
-        
-        XCTAssertEqual(listener.pickup, DefaultSetPickupDropoffViewModelTest.pickup)
-        XCTAssertEqual(listener.dropoff, DefaultSetPickupDropoffViewModelTest.dropoff)
-        XCTAssertEqual(listener.methodCalls, ["set(pickup:dropoff:)"])
-    }
-}
 
-class RecordingSetPickupDropoffListener: MethodCallRecorder, SetPickupDropoffListener {
-    var pickup: PreTripLocation?
-    var dropoff: PreTripLocation?
-    
-    func set(pickup: PreTripLocation, dropoff: PreTripLocation) {
-        self.pickup = pickup
-        self.dropoff = dropoff
-        recordMethodCall(#function)
+        verify(listener, times(1)).set(pickup: equal(to: DefaultSetPickupDropoffViewModelTest.confirmedPickup),
+                                       dropoff: equal(to: DefaultSetPickupDropoffViewModelTest.confirmedDropoff))
+        verifyNoMoreInteractions(listener)
     }
     
-    func cancelSetPickupDropoff() {
-        recordMethodCall(#function)
+    func testDoneSearchingWithUnconfirmedLocationsThenConfirmingDropoffAndPickupCallsSetPickupDropoffOnListener() {
+        setUp(initialPickup: DefaultSetPickupDropoffViewModelTest.pickup,
+              initialDropoff: DefaultSetPickupDropoffViewModelTest.dropoff,
+              initialFocus: .dropoff)
+        scheduler.scheduleAt(1, action: { self.viewModelUnderTest.doneSearching() })
+        scheduler.scheduleAt(4, action: {
+            self.viewModelUnderTest
+                .confirmLocation(DefaultSetPickupDropoffViewModelTest.dropoff.desiredAndAssignedLocation)
+        })
+        scheduler.scheduleAt(7, action: {
+            self.viewModelUnderTest
+                .confirmLocation(DefaultSetPickupDropoffViewModelTest.pickup.desiredAndAssignedLocation)
+        })
+        scheduler.start()
+        
+        XCTAssertEqual(recorder.events, [
+            next(0, SetPickupDropOffDisplayState(
+                step: DefaultSetPickupDropoffViewModelTest.expectedSearchingForPickupDropoffState,
+                pickup: DefaultSetPickupDropoffViewModelTest.pickup,
+                dropoff: DefaultSetPickupDropoffViewModelTest.dropoff,
+                focus: .dropoff
+            )),
+            next(2, SetPickupDropOffDisplayState(
+                step: DefaultSetPickupDropoffViewModelTest.expectedSearchingForPickupDropoffState,
+                pickup: DefaultSetPickupDropoffViewModelTest.pickup,
+                dropoff: DefaultSetPickupDropoffViewModelTest.dropoff,
+                focus: .dropoff
+            )),
+            next(3, SetPickupDropOffDisplayState(
+                step: .confirmingDropoff,
+                pickup: DefaultSetPickupDropoffViewModelTest.pickup,
+                dropoff: DefaultSetPickupDropoffViewModelTest.dropoff,
+                focus: .dropoff
+            )),
+            next(5, SetPickupDropOffDisplayState(
+                step: .confirmingDropoff,
+                pickup: DefaultSetPickupDropoffViewModelTest.pickup,
+                dropoff: DefaultSetPickupDropoffViewModelTest.confirmedDropoff,
+                focus: .dropoff
+            )),
+            next(6, SetPickupDropOffDisplayState(
+                step: .confirmingPickup,
+                pickup: DefaultSetPickupDropoffViewModelTest.pickup,
+                dropoff: DefaultSetPickupDropoffViewModelTest.confirmedDropoff,
+                focus: .dropoff
+            )),
+            next(8, SetPickupDropOffDisplayState(
+                step: .confirmingPickup,
+                pickup: DefaultSetPickupDropoffViewModelTest.confirmedPickup,
+                dropoff: DefaultSetPickupDropoffViewModelTest.confirmedDropoff,
+                focus: .dropoff
+            )),
+        ])
+
+        verify(listener, times(1)).set(pickup: equal(to: DefaultSetPickupDropoffViewModelTest.confirmedPickup),
+                                       dropoff: equal(to: DefaultSetPickupDropoffViewModelTest.confirmedDropoff))
+        verifyNoMoreInteractions(listener)
     }
 }

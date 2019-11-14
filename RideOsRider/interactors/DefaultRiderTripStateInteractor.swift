@@ -271,17 +271,13 @@ public class DefaultRiderTripStateInteractor: RiderTripStateInteractor {
             fatalError("Expected state with assigned vehicle, not \(tripState.tripStateOneOfCase)")
         }
 
-        let contactUrl: URL?
+        let contactInfo = ContactInfo(
+            name: assignedVehicleContactInfo.name,
+            phoneNumber: assignedVehicleContactInfo.phoneNumber,
+            contactURL: assignedVehicleContactInfo.contactURL
+        )
 
-        if assignedVehicleContactInfo.contactURL.isNotEmpty {
-            contactUrl = URL(string: assignedVehicleContactInfo.contactURL)
-        } else if assignedVehicleContactInfo.phoneNumber.isNotEmpty {
-            contactUrl = URL(string: "tel://" + assignedVehicleContactInfo.phoneNumber)
-        } else {
-            contactUrl = nil
-        }
-
-        return VehicleInfo(licensePlate: assignedVehicleInfo.licensePlate, contactInfo: ContactInfo(url: contactUrl))
+        return VehicleInfo(licensePlate: assignedVehicleInfo.licensePlate, contactInfo: contactInfo)
     }
 
     private static func vehiclePosition(from tripState: RideHailCommonsTripState) -> VehiclePosition {
@@ -374,12 +370,6 @@ public class DefaultRiderTripStateInteractor: RiderTripStateInteractor {
 
             return route.distanceInMeters
         }.reduce(0.0, +)
-
-        guard planCoordinates.count > 0 else {
-            return Route(coordinates: [],
-                         travelTime: planTravelTime,
-                         travelDistanceMeters: planTravelDistanceMeters)
-        }
 
         return Route(coordinates: polylineSimplifier.simplify(polyline: planCoordinates),
                      travelTime: planTravelTime,

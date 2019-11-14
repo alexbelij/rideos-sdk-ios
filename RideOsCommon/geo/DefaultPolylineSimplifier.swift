@@ -32,6 +32,9 @@ public class DefaultPolylineSimplifier: PolylineSimplifier {
         // it seems to work ok for our purposes for now. At some point, we should consider implementing proper
         // simplification of coordinates by a) using the correct distance metric or b) projecting the coordinates to a
         // local tangent plane and doing the simplification in that plane
+        guard polyline.count > 1 else {
+            return polyline
+        }
         return SwiftSimplify.simplify(polyline, tolerance: toleranceDegrees)
     }
 }

@@ -15,11 +15,22 @@
 
 import RideOsCommon
 import RxCocoa
+import RxSwift
 import UIKit
 
 public class WatingForPickupDialogView: BottomDialogStackView {
+    private static let headerLabelTextColor =
+        RideOsDriverResourceLoader.instance.getColor("ai.rideos.driver.dialog.header-label.text-color")
+    private static let mainLabelTextColor =
+        RideOsDriverResourceLoader.instance.getColor("ai.rideos.driver.dialog.main-label.text-color")
+    private static let showDetailsIcon =
+        RideOsDriverResourceLoader.instance.getImage("ai.rideos.driver.arrow-down")
     private static let confirmPickupButtonTitle =
         RideOsDriverResourceLoader.instance.getString("ai.rideos.driver.online.waiting-for-pickup.button.title")
+
+    public var showDetailsTapEvents: ControlEvent<Void> {
+        return showDetailsButton.rx.tap
+    }
 
     public var confirmPickupTapEvents: ControlEvent<Void> {
         return confirmPickupButton.tapEvents
@@ -34,21 +45,30 @@ public class WatingForPickupDialogView: BottomDialogStackView {
         }
     }
 
-    private let pickupPassengersLabel = WatingForPickupDialogView.pickupPassengersLabel()
+    private let separatorView = BottomDialogStackView.separatorView()
+    private let showDetailsButton = WatingForPickupDialogView.showDetailsButton()
+    private let mainTextLabel = WatingForPickupDialogView.mainTextLabel()
     private let confirmPickupButton = StackedActionButtonContainerView(
         title: WatingForPickupDialogView.confirmPickupButtonTitle
     )
+    private let disposeBag = DisposeBag()
 
-    public init(pickupPassengersText: String) {
+    public init(headerText: String) {
+        let headerView = WatingForPickupDialogView.headerView(
+            labelText: headerText,
+            showDetailsButton: showDetailsButton,
+            disposeBag: disposeBag
+        )
+
         super.init(stackedElements: [
-            .customSpacing(spacing: 24.0),
-            .view(view: WatingForPickupDialogView.pickupPassengerLabelContainer(withLabel: pickupPassengersLabel)),
+            .view(view: headerView),
+            .view(view: separatorView),
+            .customSpacing(spacing: 20.0),
+            .view(view: mainTextLabel),
             .customSpacing(spacing: 24.0),
             .view(view: confirmPickupButton),
             .customSpacing(spacing: 16.0),
         ])
-
-        pickupPassengersLabel.text = pickupPassengersText
 
         Shadows.enableShadows(onView: self)
     }
@@ -56,32 +76,60 @@ public class WatingForPickupDialogView: BottomDialogStackView {
     required init?(coder _: NSCoder) {
         fatalError("\(#function) has not been implemented")
     }
+
+    public func set(mainText: String) {
+        mainTextLabel.text = mainText
+    }
 }
 
 extension WatingForPickupDialogView {
-    private static func pickupPassengerLabelContainer(withLabel label: UILabel) -> UIView {
-        let container = UIView(frame: .zero)
+    private static func headerView(labelText: String,
+                                   showDetailsButton: UIButton,
+                                   disposeBag: DisposeBag) -> UIView {
+        let label = UILabel()
+        label.isUserInteractionEnabled = true
+        label.font = UIFont.systemFont(ofSize: 18)
+        label.textAlignment = .left
+        label.textColor = WatingForPickupDialogView.headerLabelTextColor
+        label.text = labelText
 
-        container.addSubview(label)
+        let headerView = UIView(frame: .zero)
+        headerView.heightAnchor.constraint(equalToConstant: 48.0).isActive = true
+
+        headerView.addSubview(label)
         label.translatesAutoresizingMaskIntoConstraints = false
-        label.topAnchor.constraint(equalTo: container.topAnchor).isActive = true
-        label.bottomAnchor.constraint(equalTo: container.bottomAnchor).isActive = true
-        label.leftAnchor.constraint(equalTo: container.leftAnchor, constant: 16.0).isActive = true
-        label.rightAnchor.constraint(equalTo: container.rightAnchor, constant: -16.0).isActive = true
+        label.leftAnchor.constraint(equalTo: headerView.leftAnchor, constant: 16.0).isActive = true
+        label.centerYAnchor.constraint(equalTo: headerView.centerYAnchor).isActive = true
 
-        return container
+        headerView.addSubview(showDetailsButton)
+        showDetailsButton.translatesAutoresizingMaskIntoConstraints = false
+        showDetailsButton.rightAnchor.constraint(equalTo: headerView.rightAnchor).isActive = true
+        showDetailsButton.centerYAnchor.constraint(equalTo: headerView.centerYAnchor).isActive = true
+
+        let tapGestureRecognizer = UITapGestureRecognizer(target: nil, action: nil)
+        tapGestureRecognizer.rx.event.subscribe { _ in
+            showDetailsButton.sendActions(for: .touchUpInside)
+        }
+        .disposed(by: disposeBag)
+
+        label.addGestureRecognizer(tapGestureRecognizer)
+        headerView.addGestureRecognizer(tapGestureRecognizer)
+
+        return headerView
     }
 
-    private static func pickupPassengersLabel() -> UILabel {
+    private static func showDetailsButton() -> UIButton {
+        let button = UIButton(type: .custom)
+        button.setImage(WatingForPickupDialogView.showDetailsIcon, for: .normal)
+
+        return button
+    }
+
+    private static func mainTextLabel() -> UILabel {
         let label = UILabel()
-        label.font = UIFont.systemFont(ofSize: 18)
+        label.font = UIFont.boldSystemFont(ofSize: 22)
         label.textAlignment = .center
-        label.textColor = UIColor.black
-        label.adjustsFontSizeToFitWidth = true
-
-        let minimumFontSize: CGFloat = 10.0
-        label.minimumScaleFactor = minimumFontSize / label.font.pointSize
-
+        label.textColor = WatingForPickupDialogView.mainLabelTextColor
         return label
     }
 }

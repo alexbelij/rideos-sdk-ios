@@ -19,13 +19,13 @@ import RideOsCommon
 import RxSwift
 
 class DriverDeveloperSettingsFormViewController: CommonDeveloperSettingsFormViewController {
-    override init(userStorageReader: UserStorageReader,
-                  userStorageWriter: UserStorageWriter,
-                  fleetSelectionViewModel: FleetSelectionViewModel,
+    override init(fleetSelectionViewModel: FleetSelectionViewModel,
+                  userStorageReader: UserStorageReader = UserDefaultsUserStorageReader(),
+                  userStorageWriter: UserStorageWriter = UserDefaultsUserStorageWriter(),
                   schedulerProvider: SchedulerProvider = DefaultSchedulerProvider()) {
-        super.init(userStorageReader: userStorageReader,
+        super.init(fleetSelectionViewModel: fleetSelectionViewModel,
+                   userStorageReader: userStorageReader,
                    userStorageWriter: userStorageWriter,
-                   fleetSelectionViewModel: fleetSelectionViewModel,
                    schedulerProvider: schedulerProvider)
     }
 

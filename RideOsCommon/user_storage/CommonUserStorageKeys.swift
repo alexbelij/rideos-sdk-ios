@@ -19,4 +19,5 @@ public class CommonUserStorageKeys {
     public static let userId = UserStorageKey<String>("UserIdDefaultsKey")
     public static let fleetOption = UserStorageKey<FleetOption>("FleetOptionDefaultsKey")
     public static let preferredName = UserStorageKey<String>("PreferredNameAccountSettingsUserStorageKey")
+    public static let phoneNumber = UserStorageKey<String>("PhoneNumberAccountSettingsUserStorageKey")
 }

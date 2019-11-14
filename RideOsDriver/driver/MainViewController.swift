@@ -33,8 +33,10 @@ public class MainViewController: UIViewController, AuthenticatedViewController {
     private let fleetOptionResolver: FleetOptionResolver
     private let disposeBag = DisposeBag()
 
-    public init(fleetInteractor: FleetInteractor = DriverDependencyRegistry.instance.driverDependencyFactory.fleetInteractor,
+    public init(fleetInteractor: FleetInteractor =
+        DriverDependencyRegistry.instance.driverDependencyFactory.fleetInteractor,
                 sideMenuManager: SideMenuManager = SideMenuManager.default,
+                menuOptions: [MenuOption] = DriverDependencyRegistry.instance.driverDependencyFactory.menuOptions,
                 viewModel: MainViewModel = DefaultMainViewModel(),
                 application: UIApplication = UIApplication.shared,
                 schedulerProvider: SchedulerProvider = DefaultSchedulerProvider()) {
@@ -59,20 +61,10 @@ public class MainViewController: UIViewController, AuthenticatedViewController {
 
         mainNavigationController.isNavigationBarHidden = true
 
-        let developerSettingsFormViewControllerFactory = { userStorageReader, userStorageWriter in
-            DriverDeveloperSettingsFormViewController(
-                userStorageReader: userStorageReader,
-                userStorageWriter: userStorageWriter,
-                fleetSelectionViewModel: DefaultFleetSelectionViewModel(fleetInteractor: fleetInteractor)
-            )
-        }
-
-        let settingsForm = MainSettingsFormViewController(
-            developerSettingsFormViewControllerFactory: developerSettingsFormViewControllerFactory
-        )
+        let settingsForm = MainSettingsFormViewController(menuOptions: menuOptions)
         settingsForm.delegate = self
 
-        let settingsNavigationController = UISideMenuNavigationController(rootViewController: settingsForm)
+        let settingsNavigationController = SideMenuNavigationController(rootViewController: settingsForm)
         let sideMenuWidth = round(view.frame.size.width * MainViewController.settingsMenuScreenWidthPercentage)
         settingsNavigationController.menuWidth = sideMenuWidth
 

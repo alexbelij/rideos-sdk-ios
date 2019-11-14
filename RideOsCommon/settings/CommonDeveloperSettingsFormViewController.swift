@@ -37,9 +37,9 @@ open class CommonDeveloperSettingsFormViewController: FormViewController {
         fatalError("\(#function) is unimplemented")
     }
 
-    public init(userStorageReader: UserStorageReader,
+    public init(fleetSelectionViewModel: FleetSelectionViewModel,
+                userStorageReader: UserStorageReader,
                 userStorageWriter: UserStorageWriter,
-                fleetSelectionViewModel: FleetSelectionViewModel,
                 schedulerProvider: SchedulerProvider = DefaultSchedulerProvider()) {
         self.userStorageReader = userStorageReader
         self.userStorageWriter = userStorageWriter

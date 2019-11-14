@@ -163,6 +163,32 @@ public class DefaultTripInteractor: TripInteractor {
         }
     }
 
+    public func editDropoff(tripId: String, newDropoffLocation: TripLocation) -> Observable<String> {
+        let newTripId = tripIdProvider()
+
+        let request = RideHailRiderChangeTripDefinitionRequest()
+        request.tripId = tripId
+        request.replacementTripId = newTripId
+
+        request.changeDropoff = RideHailRiderChangeTripDefinitionRequest_ChangeDropoff()
+        request.changeDropoff.newDropoff = DefaultTripInteractor.stop(for: newDropoffLocation)
+
+        return Observable.create { observer in
+            let call = self.riderService.rpcToChangeTripDefinition(with: request) { _, error in
+                if let error = error {
+                    observer.onError(error)
+                    return
+                }
+
+                observer.onNext(newTripId)
+            }
+
+            call.start()
+
+            return Disposables.create { call.cancel() }
+        }
+    }
+
     private static func stop(for tripLocation: TripLocation) -> RideHailCommonsStop {
         let stop = RideHailCommonsStop()
         if let stopId = tripLocation.locationId {
@@ -175,12 +201,16 @@ public class DefaultTripInteractor: TripInteractor {
 
     private static func rideHailContactInfo(for contactInfo: ContactInfo) -> RideHailCommonsContactInfo {
         let rideHailContactInfo = RideHailCommonsContactInfo()
-        if let name = contactInfo.name {
-            rideHailContactInfo.name = name
+        rideHailContactInfo.name = contactInfo.name
+
+        if let phoneNumber = contactInfo.phoneNumber {
+            rideHailContactInfo.phoneNumber = phoneNumber
         }
+
         if let contactUrl = contactInfo.url {
             rideHailContactInfo.contactURL = contactUrl.absoluteString
         }
+
         return rideHailContactInfo
     }
 }

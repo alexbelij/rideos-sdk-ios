@@ -18,37 +18,48 @@ import RideOsCommon
 import RxSwift
 
 public class DrivePendingViewController: BackgroundMapViewController {
+    private let openTripDetailsListener: () -> Void
     private let startNavigationListener: () -> Void
     private let drivePendingDialogView: DrivePendingDialogView
     private let drivePendingViewModel: DrivePendingViewModel
     private let schedulerProvider: SchedulerProvider
     private let disposeBag = DisposeBag()
 
-    public convenience init(titleText: String,
-                            destination: CLLocationCoordinate2D,
+    public convenience init(passengerTextFormat: String,
+                            destinationWaypoint: VehiclePlan.Waypoint,
                             destinationIcon: DrawableMarkerIcon,
+                            openTripDetailsListener: @escaping () -> Void,
                             startNavigationListener: @escaping () -> Void,
                             mapViewController: MapViewController,
                             schedulerProvider: SchedulerProvider = DefaultSchedulerProvider()) {
-        let style = DefaultDrivePendingViewModel.Style(destinationIcon: destinationIcon)
+        let passengerTextProvider: TripResourceInfo.PassengerTextProvider = { tripResourceInfo in
+            String(format: passengerTextFormat, TripResourceInfo.defaultPassengerTextProvider(tripResourceInfo))
+        }
 
-        self.init(titleText: titleText,
-                  drivePendingViewModel: DefaultDrivePendingViewModel(destination: destination, style: style),
+        let style = DefaultDrivePendingViewModel.Style(
+            passengerTextProvider: passengerTextProvider,
+            destinationIcon: destinationIcon
+        )
+        let viewModel = DefaultDrivePendingViewModel(destinationWaypoint: destinationWaypoint, style: style)
+
+        self.init(drivePendingViewModel: viewModel,
+                  openTripDetailsListener: openTripDetailsListener,
                   startNavigationListener: startNavigationListener,
                   mapViewController: mapViewController,
                   schedulerProvider: schedulerProvider)
     }
 
-    public init(titleText: String,
-                drivePendingViewModel: DrivePendingViewModel,
+    public init(drivePendingViewModel: DrivePendingViewModel,
+                openTripDetailsListener: @escaping () -> Void,
                 startNavigationListener: @escaping () -> Void,
                 mapViewController: MapViewController,
                 schedulerProvider: SchedulerProvider = DefaultSchedulerProvider()) {
         self.drivePendingViewModel = drivePendingViewModel
+        self.openTripDetailsListener = openTripDetailsListener
         self.startNavigationListener = startNavigationListener
         self.schedulerProvider = schedulerProvider
 
-        drivePendingDialogView = DrivePendingDialogView(headerText: titleText)
+        drivePendingDialogView = DrivePendingDialogView(headerText: drivePendingViewModel.passengersText)
 
         super.init(mapViewController: mapViewController)
     }
@@ -60,11 +71,14 @@ public class DrivePendingViewController: BackgroundMapViewController {
     public override func viewDidLoad() {
         super.viewDidLoad()
 
-        drivePendingViewModel.routeDetailText
+        drivePendingViewModel.addressText
             .observeOn(schedulerProvider.mainThread())
-            .subscribe(onNext: {
-                [drivePendingDialogView] in drivePendingDialogView.set(estimatedArrivalTimeAndDistanceText: $0)
-            })
+            .subscribe(onNext: { [drivePendingDialogView] in drivePendingDialogView.set(mainText: $0) })
+            .disposed(by: disposeBag)
+
+        drivePendingDialogView.showDetailsTapEvents
+            .observeOn(schedulerProvider.mainThread())
+            .subscribe(onNext: { [openTripDetailsListener] _ in openTripDetailsListener() })
             .disposed(by: disposeBag)
 
         drivePendingDialogView.startNavigationTapEvents

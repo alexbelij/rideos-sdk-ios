@@ -14,6 +14,7 @@
 		56850A39230623820084FE92 /* DefaultIdleViewModelTest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56850A38230623820084FE92 /* DefaultIdleViewModelTest.swift */; };
 		56850A49230E8EB80084FE92 /* DefaultWaitingForPickupViewModelTest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56850A48230E8EB80084FE92 /* DefaultWaitingForPickupViewModelTest.swift */; };
 		5685792422F8EF8800D808A2 /* ReplayingTripStateInteractor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5685792322F8EF8800D808A2 /* ReplayingTripStateInteractor.swift */; };
+		56991CC0234C0D8300C30795 /* DefaultTripDetailsViewModelTest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56991CBF234C0D8300C30795 /* DefaultTripDetailsViewModelTest.swift */; };
 		56AF72FA22F396B500ACE78B /* RecordingVehicleStateSynchronizer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56AF72F922F396B400ACE78B /* RecordingVehicleStateSynchronizer.swift */; };
 		699EF21BFF7F53FAAE220659 /* Pods_RideOsCommonTests.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AE66AF8FB08CEA43D6FDDA1E /* Pods_RideOsCommonTests.framework */; };
 		83184CC422EF5ED3000530DC /* RecordingGoOfflineListener.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83184CA822EF5ED2000530DC /* RecordingGoOfflineListener.swift */; };
@@ -72,7 +73,6 @@
 		831A90C622EBB1D200204D8A /* DefaultStartScreenViewModelTest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 831A90AA22EBB1D200204D8A /* DefaultStartScreenViewModelTest.swift */; };
 		831A90C722EBB1D200204D8A /* RecordingConfirmLocationListener.swift in Sources */ = {isa = PBXBuildFile; fileRef = 831A90AC22EBB1D200204D8A /* RecordingConfirmLocationListener.swift */; };
 		831A90C922EBB1D200204D8A /* UserStorageHistoricalSearchInteractorTest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 831A90AF22EBB1D200204D8A /* UserStorageHistoricalSearchInteractorTest.swift */; };
-		831A90CA22EBB1D200204D8A /* FixedTripInteractor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 831A90B022EBB1D200204D8A /* FixedTripInteractor.swift */; };
 		831A90CB22EBB1D200204D8A /* FixedAvailableVehicleInteractor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 831A90B122EBB1D200204D8A /* FixedAvailableVehicleInteractor.swift */; };
 		831A90CC22EBB1D200204D8A /* FixedLocationAutocompleteInteractor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 831A90B222EBB1D200204D8A /* FixedLocationAutocompleteInteractor.swift */; };
 		831A90CD22EBB1D200204D8A /* FixedVehicleInteractor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 831A90B322EBB1D200204D8A /* FixedVehicleInteractor.swift */; };
@@ -96,6 +96,7 @@
 		56850A38230623820084FE92 /* DefaultIdleViewModelTest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DefaultIdleViewModelTest.swift; sourceTree = "<group>"; };
 		56850A48230E8EB80084FE92 /* DefaultWaitingForPickupViewModelTest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DefaultWaitingForPickupViewModelTest.swift; sourceTree = "<group>"; };
 		5685792322F8EF8800D808A2 /* ReplayingTripStateInteractor.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ReplayingTripStateInteractor.swift; sourceTree = "<group>"; };
+		56991CBF234C0D8300C30795 /* DefaultTripDetailsViewModelTest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DefaultTripDetailsViewModelTest.swift; sourceTree = "<group>"; };
 		56AF72F922F396B400ACE78B /* RecordingVehicleStateSynchronizer.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = RecordingVehicleStateSynchronizer.swift; sourceTree = "<group>"; };
 		6CA9B6F4F01B756809E3CAD6 /* Pods_RideOsHereMapsTests.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_RideOsHereMapsTests.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		7B8BEC4A7ED3C6F8DE5A99C1 /* Pods-RideOsGoogleMapsTests.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-RideOsGoogleMapsTests.debug.xcconfig"; path = "Target Support Files/Pods-RideOsGoogleMapsTests/Pods-RideOsGoogleMapsTests.debug.xcconfig"; sourceTree = "<group>"; };
@@ -164,7 +165,6 @@
 		831A90AA22EBB1D200204D8A /* DefaultStartScreenViewModelTest.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DefaultStartScreenViewModelTest.swift; sourceTree = "<group>"; };
 		831A90AC22EBB1D200204D8A /* RecordingConfirmLocationListener.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = RecordingConfirmLocationListener.swift; sourceTree = "<group>"; };
 		831A90AF22EBB1D200204D8A /* UserStorageHistoricalSearchInteractorTest.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = UserStorageHistoricalSearchInteractorTest.swift; sourceTree = "<group>"; };
-		831A90B022EBB1D200204D8A /* FixedTripInteractor.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = FixedTripInteractor.swift; sourceTree = "<group>"; };
 		831A90B122EBB1D200204D8A /* FixedAvailableVehicleInteractor.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = FixedAvailableVehicleInteractor.swift; sourceTree = "<group>"; };
 		831A90B222EBB1D200204D8A /* FixedLocationAutocompleteInteractor.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = FixedLocationAutocompleteInteractor.swift; sourceTree = "<group>"; };
 		831A90B322EBB1D200204D8A /* FixedVehicleInteractor.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = FixedVehicleInteractor.swift; sourceTree = "<group>"; };
@@ -283,6 +283,14 @@
 			path = waiting_for_pickup;
 			sourceTree = "<group>";
 		};
+		56991CBE234C0D5100C30795 /* trip_details */ = {
+			isa = PBXGroup;
+			children = (
+				56991CBF234C0D8300C30795 /* DefaultTripDetailsViewModelTest.swift */,
+			);
+			path = trip_details;
+			sourceTree = "<group>";
+		};
 		83184CA622EF5ED2000530DC /* RideOsDriverTests */ = {
 			isa = PBXGroup;
 			children = (
@@ -354,10 +362,11 @@
 		83184CB422EF5ED3000530DC /* online */ = {
 			isa = PBXGroup;
 			children = (
-				56850A47230E8E950084FE92 /* waiting_for_pickup */,
 				83184CB522EF5ED3000530DC /* DefaultOnlineViewModelTest.swift */,
 				83184CB622EF5ED3000530DC /* driving */,
 				56850A37230622A80084FE92 /* idle */,
+				56991CBE234C0D5100C30795 /* trip_details */,
+				56850A47230E8E950084FE92 /* waiting_for_pickup */,
 			);
 			path = online;
 			sourceTree = "<group>";
@@ -714,7 +723,6 @@
 			isa = PBXGroup;
 			children = (
 				831A90AF22EBB1D200204D8A /* UserStorageHistoricalSearchInteractorTest.swift */,
-				831A90B022EBB1D200204D8A /* FixedTripInteractor.swift */,
 				831A90B122EBB1D200204D8A /* FixedAvailableVehicleInteractor.swift */,
 				831A90B222EBB1D200204D8A /* FixedLocationAutocompleteInteractor.swift */,
 				831A90B322EBB1D200204D8A /* FixedVehicleInteractor.swift */,
@@ -1105,7 +1113,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "OUTPUT_FILE=\"${PROJECT_DIR}/${TARGET_NAME}/mocks/RideOsRiderTestsGeneratedMocks.swift\"\necho \"Generated Mocks File = ${OUTPUT_FILE}\"\n\nINPUT_DIR=\"${PROJECT_DIR}/../\"\necho \"Mocks Input Directory = ${INPUT_DIR}\"\n\n# Generate mock files, include as many input files as you'd like to create mocks for.\n\n\"${PODS_ROOT}/Cuckoo/run\" generate \\\n--testable \"RideOsRider,RideOsCommon\" \\\n--output \"${OUTPUT_FILE}\" \\\n\"${INPUT_DIR}/RideOsRider/interactors/HistoricalSearchInteractor.swift\"\n";
+			shellScript = "OUTPUT_FILE=\"${PROJECT_DIR}/${TARGET_NAME}/mocks/RideOsRiderTestsGeneratedMocks.swift\"\necho \"Generated Mocks File = ${OUTPUT_FILE}\"\n\nINPUT_DIR=\"${PROJECT_DIR}/../\"\necho \"Mocks Input Directory = ${INPUT_DIR}\"\n\n# Generate mock files, include as many input files as you'd like to create mocks for.\n\n\"${PODS_ROOT}/Cuckoo/run\" generate \\\n--testable \"RideOsRider,RideOsCommon\" \\\n--output \"${OUTPUT_FILE}\" \\\n\"${INPUT_DIR}/RideOsRider/interactors/HistoricalSearchInteractor.swift\" \\\n\"${INPUT_DIR}/RideOsRider/rider/on_trip/current_trip/CurrentTripListener.swift\" \\\n\"${INPUT_DIR}/RideOsRider/rider/set_pickup_dropoff/SetPickupDropoffListener.swift\" \\\n\"${INPUT_DIR}/RideOsRider/rider/pre_trip/PreTripListener.swift\" \\\n\"${INPUT_DIR}/RideOsRider/interactors/TripInteractor.swift\"\n";
 		};
 		83675B07233965C700B3481B /* Generate Mocks */ = {
 			isa = PBXShellScriptBuildPhase;
@@ -1386,6 +1394,7 @@
 				83184CC422EF5ED3000530DC /* RecordingGoOfflineListener.swift in Sources */,
 				83184CD122EF5ED3000530DC /* RecordingMapboxDirectionsInteractor.swift in Sources */,
 				83184CCE22EF5ED3000530DC /* DefaultDrivingViewModelTest.swift in Sources */,
+				56991CC0234C0D8300C30795 /* DefaultTripDetailsViewModelTest.swift in Sources */,
 				83184CC722EF5ED3000530DC /* DefaultVehicleRegistrationViewModelTest.swift in Sources */,
 				83184CCC22EF5ED3000530DC /* DefaultDrivePendingViewModelTest.swift in Sources */,
 				83184CC622EF5ED3000530DC /* DefaultVehicleUnregisteredViewModelTest.swift in Sources */,
@@ -1458,7 +1467,6 @@
 				831A90C722EBB1D200204D8A /* RecordingConfirmLocationListener.swift in Sources */,
 				831A90C522EBB1D200204D8A /* DefaultOnTripViewModelTest.swift in Sources */,
 				831A90CE22EBB1D200204D8A /* FixedStopInteractor.swift in Sources */,
-				831A90CA22EBB1D200204D8A /* FixedTripInteractor.swift in Sources */,
 				5685792422F8EF8800D808A2 /* ReplayingTripStateInteractor.swift in Sources */,
 				831A90B822EBB1D200204D8A /* DefaultSetPickupDropoffViewModelTest.swift in Sources */,
 				831A90BD22EBB1D200204D8A /* DefaultConfirmLocationViewModelTest.swift in Sources */,
